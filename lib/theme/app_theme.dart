@@ -178,4 +178,3 @@ final ThemeData lightTheme = baseTheme.copyWith(
   ),
 
 );
-lib/theme/app_theme.dart
