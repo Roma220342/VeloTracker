@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 const Color primaryColor = Color(0xFF009F5A);
 const Color primaryContainerColor = Color(0xFFE0F3DC);
 const Color onPrimaryColor = Color(0xFFFFFFFF);
-const Color secondaryColor = Color(0xFFF9C400);
+const Color secondaryColor = Color(0xFFFFF9C4);
 
 const Color errorColor = Color(0xFFB3261E);
 const Color errorContainerColor = Color(0xFFFEF7F6);
@@ -16,11 +16,10 @@ const Color textPrimaryColor = Color(0xFF121212);
 const Color textSecondaryColor = Color(0xFF5E5E5E);
 const Color textTertiaryColor = Color(0xFF9E9E9E);
 
-final ThemeData lightTheme = ThemeData(
+final ThemeData baseTheme = ThemeData(
   useMaterial3: true,
-  scaffoldBackgroundColor: surfaceColor,
   fontFamily: null,
-
+  scaffoldBackgroundColor: surfaceColor,
   colorScheme: const ColorScheme.light(
     primary: primaryColor,
     primaryContainer: primaryContainerColor,
@@ -61,7 +60,7 @@ final ThemeData lightTheme = ThemeData(
       fontSize: 16,
     ),
 
-    // Body Medium • 16 (твій запит)
+    // Body Medium • 16 
     bodyMedium: TextStyle(
       color: textPrimaryColor,
       fontWeight: FontWeight.w500,
@@ -82,6 +81,9 @@ final ThemeData lightTheme = ThemeData(
       fontSize: 12,
     ),
   ),
+);
+
+final ThemeData lightTheme = baseTheme.copyWith(
 
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
@@ -91,7 +93,7 @@ final ThemeData lightTheme = ThemeData(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(50.0),
       ),
-      textStyle: ThemeData.light().textTheme.bodyMedium,
+      textStyle: baseTheme.textTheme.bodyMedium,
       alignment: Alignment.center,
     ),
   ),
@@ -104,7 +106,8 @@ final ThemeData lightTheme = ThemeData(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(50.0),
       ),
-      textStyle: ThemeData.light().textTheme.bodyMedium,
+      side: BorderSide.none, 
+      textStyle: baseTheme.textTheme.bodyMedium,
       alignment: Alignment.center,
     ),
   ),
@@ -119,7 +122,7 @@ final ThemeData lightTheme = ThemeData(
       return onSurfaceColor;
     }),
 
-    hintStyle: ThemeData.light().textTheme.bodyLarge?.copyWith(
+    hintStyle: baseTheme.textTheme.bodyLarge?.copyWith(
       color: textTertiaryColor,
     ),
 
@@ -155,7 +158,7 @@ final ThemeData lightTheme = ThemeData(
     backgroundColor: surfaceColor,
     surfaceTintColor: Colors.transparent,
     elevation: 0,
-    titleTextStyle: ThemeData.light().textTheme.headlineSmall,
+    titleTextStyle: baseTheme.textTheme.headlineSmall,
     iconTheme: const IconThemeData(
       color: textPrimaryColor,
       size: 24
@@ -169,9 +172,10 @@ final ThemeData lightTheme = ThemeData(
     selectedItemColor: primaryColor,
     unselectedItemColor: textSecondaryColor,
 
-    selectedLabelStyle: ThemeData.light().textTheme.labelSmall,
-    unselectedLabelStyle: ThemeData.light().textTheme.labelSmall,
+    selectedLabelStyle: baseTheme.textTheme.labelSmall,
+    unselectedLabelStyle: baseTheme.textTheme.labelSmall,
     
   ),
 
 );
+lib/theme/app_theme.dart
