@@ -144,7 +144,7 @@ final ThemeData lightTheme = baseTheme.copyWith(
     }),
 
     contentPadding: const EdgeInsets.symmetric(
-      vertical: 16.0,
+      vertical: 20.0,
       horizontal: 16.0
     ),
 
@@ -166,7 +166,7 @@ final ThemeData lightTheme = baseTheme.copyWith(
   ),
 
   bottomNavigationBarTheme: BottomNavigationBarThemeData (
-    backgroundColor: surfaceColor,
+    backgroundColor: onSurfaceColor,
     elevation: 0,
 
     selectedItemColor: primaryColor,
