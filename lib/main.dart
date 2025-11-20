@@ -10,6 +10,7 @@ import 'screens/reset_password_screen.dart';
 import 'screens/rides_screen.dart';
 import 'screens/track_screen.dart';
 import 'screens/ride_summary_screen.dart';
+import 'screens/settings_screen.dart';
 
 // main.dart
 void main() {
@@ -32,7 +33,7 @@ class VeloTrackerApp extends StatelessWidget {
           child: child!,
         );
       },
-      home: const RideSummaryScreen(),
+      home: const SettingsScreen(),
       
     );
   }

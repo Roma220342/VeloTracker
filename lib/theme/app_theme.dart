@@ -5,9 +5,10 @@ const Color primaryContainerColor = Color(0xFFE0F3DC);
 const Color onPrimaryColor = Color(0xFFFFFFFF);
 const Color secondaryColor = Color(0xFFFFF9C4);
 const Color pauseColor = Color(0xFFFFEB3B);
+const Color outlineColor = Color(0xFFB7E1DD);
 
 const Color errorColor = Color(0xFFB3261E);
-const Color errorContainerColor = Color(0xFFFEF7F6);
+const Color errorContainerColor = Color(0xFFF7EDED);
 
 const Color surfaceColor = Color(0xFFFFFFFF);
 const Color onSurfaceColor = Color(0xFFFAFAFA);
