@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:velotracker/theme/app_theme.dart'; 
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:velotracker/main.dart';
+import 'package:velotracker/screens/auth_screens/sign_up_screen.dart';
+import 'package:velotracker/screens/forgot_password_screens/forgot_password_screen.dart';
+import 'package:velotracker/services/auth_service.dart';
+import 'package:velotracker/theme/app_theme.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -10,23 +14,87 @@ class SignInScreen extends StatefulWidget {
 }
 
 class _SignInScreenState extends State<SignInScreen> {
+  bool _isPasswordObscured = true;
+  bool _isLoading = false;
+
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
   
-  bool _isPasswordObscured = true; 
+  final AuthService _authService = AuthService();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  // Вхід через Email
+  Future<void> _handleSignIn() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill in all fields')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    final success = await _authService.login(email, password);
+
+    if (mounted) {
+      setState(() => _isLoading = false);
+
+      if (success) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const MainScreen()),
+          (route) => false,
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Login failed. Check email or password.'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
+  }
+
+  // Вхід через Google 
+  Future<void> _handleGoogleSignIn() async {
+    setState(() => _isLoading = true);
+    
+    final success = await _authService.continueWithGoogle();
+    
+    if (mounted) {
+      setState(() => _isLoading = false);
+      
+      if (success) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const MainScreen()),
+          (route) => false,
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Google Sign In failed')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
     final theme = Theme.of(context);
 
     return GestureDetector(
-      onTap: () {
-        FocusScope.of(context).unfocus();
-      },
+      onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         backgroundColor: theme.colorScheme.surface,
-        appBar: AppBar(
-          leading: const BackButton(),
-        ),
+        appBar: AppBar(leading: const BackButton()),
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -51,47 +119,39 @@ class _SignInScreenState extends State<SignInScreen> {
                     ),
                   ),
                   const SizedBox(height: 44),
+
                   Align(
                     alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Enter your email',
-                      style: theme.textTheme.bodyLarge,
-                    ),
+                    child: Text('Enter your email', style: theme.textTheme.bodyLarge),
                   ),
                   const SizedBox(height: 8),
-                  const TextField(
+                  TextField(
+                    controller: _emailController, 
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.next,
-                    autofillHints: [AutofillHints.email],
+                    autofillHints: const [AutofillHints.email],
                     autocorrect: false,
-                    enableSuggestions: false,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       hintText: 'Email',
                       prefixIcon: Icon(Icons.email_outlined),
                     ),
-                    obscureText: false,
                   ),
                   const SizedBox(height: 16),
+
                   Align(
                     alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Enter your password',
-                      style: theme.textTheme.bodyLarge,
-                    ),
+                    child: Text('Enter your password', style: theme.textTheme.bodyLarge),
                   ),
                   const SizedBox(height: 8),
-              
                   TextField(
+                    controller: _passwordController, 
                     decoration: InputDecoration(
                       hintText: 'Password',
                       prefixIcon: const Icon(Icons.lock_outlined),
-                     
                       suffixIcon: IconButton(
-                        icon: Icon(
-                          _isPasswordObscured
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
-                        ),
+                        icon: Icon(_isPasswordObscured
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined),
                         onPressed: () {
                           setState(() {
                             _isPasswordObscured = !_isPasswordObscured;
@@ -106,46 +166,53 @@ class _SignInScreenState extends State<SignInScreen> {
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (context) => const ForgotPasswordScreen()),
+                        );
+                      },
                       child: Text(
                         'Forgot Password?',
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          color: Colors.blue,
-                        ),
+                        style: theme.textTheme.bodyLarge?.copyWith(color: Colors.blue),
                       ),
                     ),
                   ),
                   const SizedBox(height: 32),
+
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {},
-                      child: const Text('Sign In'),
+                      onPressed: _isLoading ? null : _handleSignIn, 
+                      child: _isLoading 
+                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        : const Text('Sign In'),
                     ),
                   ),
                   const SizedBox(height: 32),
+                  
                   Row(
                     children: [
                       const Expanded(child: Divider(color: textTertiaryColor)),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: Text('or', style: theme.textTheme.bodyMedium?.copyWith(
-                          color: textSecondaryColor,
-                        )),
+                        child: Text('or', style: theme.textTheme.bodyMedium?.copyWith(color: textSecondaryColor)),
                       ),
                       const Expanded(child: Divider(color: textTertiaryColor)),
                     ],
                   ),
                   const SizedBox(height: 32),
+
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton(
-                      onPressed: () {},
+                      onPressed: _isLoading ? null : _handleGoogleSignIn, 
                       style: OutlinedButton.styleFrom(
                         backgroundColor: theme.colorScheme.surface,
                         side: const BorderSide(color: textTertiaryColor),
                       ),
-                      child: Stack(
+                      child: _isLoading 
+                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                        : Stack(
                         alignment: Alignment.center,
                         children: [
                           const Text('Continue with Google'),
@@ -165,22 +232,20 @@ class _SignInScreenState extends State<SignInScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        'Don\'t have an account?',
-                        style: theme.textTheme.bodyMedium,
-                      ),
+                      Text('Don\'t have an account?', style: theme.textTheme.bodyMedium),
                       TextButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.of(context).pushReplacement(
+                             MaterialPageRoute(builder: (context) => const SignUpScreen()),
+                          );
+                        },
                         child: Text(
                           'Sign up',
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            color: Colors.blue,
-                          ),
+                          style: theme.textTheme.bodyLarge?.copyWith(color: Colors.blue),
                         ),
                       ),
                     ],
                   ),
-                  SizedBox(height: screenHeight * 0.037),
                 ],
               ),
             ),

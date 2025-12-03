@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:velotracker/theme/app_theme.dart';
-import 'package:velotracker/widgets/setting_item.dart';
-import 'package:velotracker/widgets/unit_option_button.dart';
+import 'package:velotracker/widgets/settings_widgets/setting_item.dart';
+import 'package:velotracker/widgets/settings_widgets/unit_option_button.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -13,7 +13,7 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _isKmSelected = true;
   bool _isDarkMode = false;
-  int _currentIndex = 2;
+  // Змінна _currentIndex видалена, оскільки навігацією керує MainScreen
 
   @override
   Widget build(BuildContext context) {
@@ -73,8 +73,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 curve: Curves.easeInOut,
                                 top: 0,
                                 bottom: 0,
-                                // Якщо вибрано Km (true) -> left: 0
-                                // Якщо вибрано Miles (false) -> left: segmentWidth
                                 left: _isKmSelected ? 0 : segmentWidth,
                                 width: segmentWidth,
                                 child: Container(
@@ -89,7 +87,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 children: [
                                   UnitOptionButton(
                                     title: 'Km',
-                                    isActive: _isKmSelected, // Якщо true - активна
+                                    isActive: _isKmSelected, 
                                     onTap: () {
                                       setState(() {
                                         _isKmSelected = true;
@@ -98,7 +96,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   ),
                                   UnitOptionButton(
                                     title: 'Miles',
-                                    isActive: !_isKmSelected, // Якщо false - активна (Miles)
+                                    isActive: !_isKmSelected, 
                                     onTap: () {
                                       setState(() {
                                         _isKmSelected = false;
@@ -151,7 +149,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: Column(
                   children: [
                     // Email (Non-editable)
-                    // Ми використовуємо SettingItem, але іконка буде зеленою (стандартною)
                     const SettingItem(
                       icon: Icons.person_outline,
                       title: 'Email',
@@ -168,12 +165,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     SettingItem(
                       icon: Icons.logout,
                       title: 'Log Out',
-                      iconColor: errorColor, // Сірий
+                      iconColor: errorColor, 
                       iconBgColor: errorContainerColor,
-                      isDestructive: true, // Червоний текст
+                      isDestructive: true, 
                       onTap: () {
                         // TODO: Логіка виходу (очистка токена і перехід на Welcome)
-                        // Navigator.of(context).pushAndRemoveUntil(...)
                       },
                     ),
                   ],
@@ -183,31 +179,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
       ),
-
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() => _currentIndex = index);
-          // TODO: Тут можна додати логіку переходу на інші екрани:
-          // if (index == 0) Navigator.pushNamed(context, '/track');
-          // if (index == 1) Navigator.pushNamed(context, '/rides');
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.radio_button_checked),
-            label: 'Track',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.list_alt),
-            label: 'Rides',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Settings',
-          ),
-        ],
-      ),
     );
   }
-
 }

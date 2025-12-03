@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:velotracker/theme/app_theme.dart';
-import 'package:velotracker/widgets/discard_dialog.dart';
-import 'package:velotracker/widgets/stat_item.dart';
+import 'package:velotracker/widgets/tracks_widgets/discard_dialog.dart';
+import 'package:velotracker/widgets/tracks_widgets/stat_item.dart';
 
 class RideSummaryScreen extends StatefulWidget {
   const RideSummaryScreen({super.key});

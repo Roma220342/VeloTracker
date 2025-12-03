@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "282808432308",
+    "project_id": "velotracker-479108",
+    "storage_bucket": "velotracker-479108.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:282808432308:android:255ab8b2664a19284e89e1",
+        "android_client_info": {
+          "package_name": "com.example.velotracker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDy6zP5OlAKqRLX1lps9ABN7rl7a_gx_JE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

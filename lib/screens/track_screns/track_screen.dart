@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:velotracker/theme/app_theme.dart';
-import 'package:velotracker/widgets/discard_dialog.dart'; 
+import 'package:velotracker/widgets/tracks_widgets/discard_dialog.dart'; 
 import 'package:flutter_svg/flutter_svg.dart';
 
 enum TrackingState { ready, tracking, paused }

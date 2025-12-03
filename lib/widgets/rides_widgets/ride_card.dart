@@ -61,12 +61,12 @@ class RideCard extends StatelessWidget {
 
                   Text(
                     '${ride.distance} km · ${ride.avgSpeed} km/h · ${ride.duration}',
-                    style: theme.textTheme.bodyMedium,
+                    style: theme.textTheme.bodyLarge,
                   ),
 
                   Text(
                     dateStr,
-                    style: theme.textTheme.bodyMedium,
+                    style: theme.textTheme.bodyLarge,
                   ),
                 ],
               ),

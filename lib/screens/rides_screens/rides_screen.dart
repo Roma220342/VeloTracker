@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:velotracker/theme/app_theme.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:velotracker/models/ride_model.dart';
-import 'package:velotracker/widgets/stats_card.dart';
-import 'package:velotracker/widgets/ride_card.dart';
+import 'package:velotracker/widgets/rides_widgets/stats_card.dart';
+import 'package:velotracker/widgets/rides_widgets/ride_card.dart';
+import 'package:velotracker/widgets/rides_widgets/sliding_segmented_control.dart';
 
 class RidesScreen extends StatefulWidget {
   const RidesScreen({super.key});
@@ -13,38 +14,22 @@ class RidesScreen extends StatefulWidget {
 }
 
 class _RidesScreenState extends State<RidesScreen> {
+  //Заглужка
   final List<RideModel> _allRides = [
-    RideModel(
-      id: '1',
-      title: 'Morning Lake Loop',
-      date: DateTime.now(),
-      distance: 45.53,
-      duration: '1:30:43',
-      avgSpeed: 34.3,
-    ),
-    RideModel(
-      id: '2',
-      title: 'City Commute',
-      date: DateTime.now().subtract(const Duration(days: 1)),
-      distance: 12.4,
-      duration: '0:45:10',
-      avgSpeed: 18.5,
-    ),
-    RideModel(
-      id: '3',
-      title: 'Night Ride',
-      date: DateTime.now().subtract(const Duration(days: 5)),
-      distance: 22.0,
-      duration: '1:10:00',
-      avgSpeed: 20.1,
-    ),
+    RideModel(id: '1', title: 'Morning Lake Loop', date: DateTime.now(), distance: 45.53, duration: '1:30:43', avgSpeed: 34.3),
+    RideModel(id: '2', title: 'City Commute', date: DateTime.now().subtract(const Duration(days: 1)), distance: 12.4, duration: '0:45:10', avgSpeed: 18.5),
+    RideModel(id: '3', title: 'Night Ride', date: DateTime.now().subtract(const Duration(days: 5)), distance: 22.0, duration: '1:10:00', avgSpeed: 20.1),
   ];
+  
+  // Заглужка порожня 
+  // final List<RideModel> _allRides = []; 
 
   List<RideModel> _filteredRides = [];
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
-  int _selectedFilterIndex = 0;
-  int _currentIndex = 1;
+  
+  // Зберігаємо, яка кнопка фільтра обрана (0=All, 1=Week, 2=Month)
+  int _selectedFilterIndex = 0; 
 
   @override
   void initState() {
@@ -52,15 +37,14 @@ class _RidesScreenState extends State<RidesScreen> {
     _filteredRides = _allRides;
   }
 
+  // Логіка пошуку поїздок за назвою
   void _runSearch(String query) {
     setState(() {
       if (query.isEmpty) {
         _filteredRides = _allRides;
       } else {
         _filteredRides = _allRides
-            .where(
-              (ride) => ride.title.toLowerCase().contains(query.toLowerCase()),
-            )
+            .where((ride) => ride.title.toLowerCase().contains(query.toLowerCase()))
             .toList();
       }
     });
@@ -73,18 +57,19 @@ class _RidesScreenState extends State<RidesScreen> {
 
     return GestureDetector(
       onTap: () {
-        FocusScope.of(context).unfocus();
+        FocusScope.of(context).unfocus(); 
       },
       child: Scaffold(
         backgroundColor: theme.colorScheme.surface,
 
+        // app bar
         appBar: _isSearching
-            ? AppBar(
+            ? AppBar( //шукаєм
                 leading: IconButton(
                   icon: const Icon(Icons.arrow_back),
                   onPressed: () {
                     setState(() {
-                      _isSearching = false;
+                      _isSearching = false; // Виходимо з пошуку
                       _searchController.clear();
                       _filteredRides = _allRides;
                     });
@@ -97,14 +82,28 @@ class _RidesScreenState extends State<RidesScreen> {
                   decoration: const InputDecoration(
                     hintText: 'Search rides...',
                     border: InputBorder.none,
+                    filled: false,
                   ),
                 ),
               )
-            : AppBar(
+            : AppBar(//дефолт
                 automaticallyImplyLeading: false,
+                leading: Padding(
+                  padding: const EdgeInsets.only(left: 16.0),
+                  child: Center(
+                    child: SvgPicture.asset(
+                      'assets/icons/velo_logo.svg',
+                      width: 24,
+                      height: 24,
+                      colorFilter: const ColorFilter.mode(textPrimaryColor, BlendMode.srcIn),
+                    ),
+                  ),
+                ),
+                leadingWidth: 48,
                 title: const Text('Rides'),
                 centerTitle: true,
                 actions: [
+                  // Показуємо лупу тільки якщо є поїздки
                   if (hasRides)
                     Padding(
                       padding: const EdgeInsets.only(right: 16.0),
@@ -112,60 +111,52 @@ class _RidesScreenState extends State<RidesScreen> {
                         icon: const Icon(Icons.search),
                         onPressed: () {
                           setState(() {
-                            _isSearching = true;
+                            _isSearching = true; // Вмикаємо пошук
                           });
                         },
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
-                        style: IconButton.styleFrom(
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
+                        style: IconButton.styleFrom(tapTargetSize: MaterialTapTargetSize.shrinkWrap),
                       ),
-                    ),
+                    )
                 ],
               ),
 
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) {
-            setState(() => _currentIndex = index);
-          },
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.radio_button_checked),
-              label: 'Track',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.list_alt),
-              label: 'Rides',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.settings),
-              label: 'Settings',
-            ),
-          ],
-        ),
-
+        // тіло екрану
         body: SafeArea(
           child: hasRides
-              ? _buildDataContent(theme)
-              : _buildEmptyState(theme),
+              ? _buildDataContent(theme) // Показуємо список
+              : _buildEmptyState(theme), // Показуємо "No Rides Yet"
         ),
       ),
     );
   }
 
+  // Віджет, коли є дані
   Widget _buildDataContent(ThemeData theme) {
     return Column(
       children: [
+        // Якщо не шукаємо, показуємо фільтри і статистику
         if (!_isSearching) ...[
           const SizedBox(height: 16),
+          
+          // 1. філтр
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: _buildSlidingSegmentedControl(),
+            child: SlidingSegmentedControl(
+              selectedIndex: _selectedFilterIndex,
+              values: const ['All', 'Week', 'Month'],
+              onValueChanged: (index) {
+                setState(() {
+                  _selectedFilterIndex = index;
+                });
+              },
+            ),
           ),
+          
           const SizedBox(height: 16),
 
+          // 2. стаистика
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -180,14 +171,13 @@ class _RidesScreenState extends State<RidesScreen> {
           const SizedBox(height: 24),
         ],
 
+        // 3. список поїздок
         Expanded(
           child: _filteredRides.isEmpty
               ? Center(
                   child: Text(
                     'No rides found',
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: textSecondaryColor,
-                    ),
+                    style: theme.textTheme.bodyLarge?.copyWith(color: textSecondaryColor),
                   ),
                 )
               : ListView.builder(
@@ -196,7 +186,9 @@ class _RidesScreenState extends State<RidesScreen> {
                   itemBuilder: (context, index) {
                     return RideCard(
                       ride: _filteredRides[index],
-                      onTap: () {},
+                      onTap: () {
+                        // TODO: Перехід на деталі
+                      },
                     );
                   },
                 ),
@@ -205,13 +197,26 @@ class _RidesScreenState extends State<RidesScreen> {
     );
   }
 
+  // Віджет, коли пусто 
   Widget _buildEmptyState(ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Column(
         children: [
           const SizedBox(height: 16),
-          _buildSlidingSegmentedControl(),
+          
+          // Фільтр все одно показуємо
+          SlidingSegmentedControl(
+            selectedIndex: _selectedFilterIndex,
+            values: const ['All', 'Week', 'Month'],
+            onValueChanged: (index) {
+              setState(() {
+                _selectedFilterIndex = index;
+              });
+            },
+          ),
+          
+          // Картинка і текст "Пусто"
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -239,6 +244,8 @@ class _RidesScreenState extends State<RidesScreen> {
               ],
             ),
           ),
+
+          // Кнопка "Почати"
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -248,72 +255,6 @@ class _RidesScreenState extends State<RidesScreen> {
           ),
           const SizedBox(height: 16),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSlidingSegmentedControl() {
-    final theme = Theme.of(context);
-    const int itemsCount = 3;
-
-    return Container(
-      height: 44,
-      decoration: BoxDecoration(
-        color: onSurfaceColor,
-        borderRadius: BorderRadius.circular(50),
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final double segmentWidth = constraints.maxWidth / itemsCount;
-
-          return Stack(
-            children: [
-              AnimatedPositioned(
-                duration: const Duration(milliseconds: 200),
-                curve: Curves.easeInOut,
-                left: _selectedFilterIndex * segmentWidth,
-                top: 0,
-                bottom: 0,
-                width: segmentWidth,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary,
-                    borderRadius: BorderRadius.circular(50),
-                  ),
-                ),
-              ),
-              Row(
-                children: [
-                  _buildSingleTab('All', 0),
-                  _buildSingleTab('Week', 1),
-                  _buildSingleTab('Month', 2),
-                ],
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildSingleTab(String text, int index) {
-    final isSelected = _selectedFilterIndex == index;
-    final theme = Theme.of(context);
-
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => _selectedFilterIndex = index),
-        child: Container(
-          alignment: Alignment.center,
-          color: Colors.transparent,
-          child: AnimatedDefaultTextStyle(
-            duration: const Duration(milliseconds: 200),
-            style: theme.textTheme.bodyMedium!.copyWith(
-              color: isSelected ? Colors.white : textSecondaryColor,
-            ),
-            child: Text(text),
-          ),
-        ),
       ),
     );
   }
