@@ -69,7 +69,7 @@ class WelcomeScreen extends StatelessWidget{
                     style: TextButton.styleFrom(
                       textStyle: theme.textTheme.bodyLarge,
                       // ВИПРАВЛЕННЯ 3: Замінено неіснуючий textTertiaryColor на колір з теми (наприклад, onSurface.withOpacity(0.6))
-                      foregroundColor: theme.colorScheme.onSurface.withOpacity(0.6), 
+                      foregroundColor: theme.colorScheme.onSurface, 
                     ),
                     onPressed: () {
                       Navigator.of(context).pushReplacement(

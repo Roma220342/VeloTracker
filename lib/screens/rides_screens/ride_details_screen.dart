@@ -1,56 +1,150 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:velotracker/models/ride_model.dart';
+import 'package:velotracker/services/ride_service.dart';
 import 'package:velotracker/theme/app_theme.dart';
-import 'package:velotracker/widgets/rides_widgets/detail_item.dart'; 
+import 'package:velotracker/widgets/ride_details_widgets/delete_ride_dialog.dart'; // Імпорт діалогу видалення
+import 'package:velotracker/widgets/rides_widgets/detail_item.dart';
+import 'package:velotracker/widgets/ride_details_widgets/edit_ride_dialog.dart'; // Імпорт діалогу редагування
+import 'package:velotracker/widgets/ride_details_widgets/route_map.dart'; 
 
-class RideDetailsScreen extends StatelessWidget {
-  const RideDetailsScreen({super.key});
+class RideDetailsScreen extends StatefulWidget {
+  final RideModel ride;
+
+  const RideDetailsScreen({super.key, required this.ride});
+
+  @override
+  State<RideDetailsScreen> createState() => _RideDetailsScreenState();
+}
+
+class _RideDetailsScreenState extends State<RideDetailsScreen> {
+  final RideService _rideService = RideService();
+  late RideModel _displayRide;
+  bool _isDeleting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _displayRide = widget.ride;
+  }
+
+  // --- ЛОГІКА РЕДАГУВАННЯ ---
+  Future<void> _onEditPressed() async {
+    // 1. Показуємо діалог (логіка UI винесена у віджет)
+    final result = await showDialog<Map<String, String>>(
+      context: context,
+      builder: (ctx) => EditRideDialog(
+        initialTitle: _displayRide.title,
+        initialNotes: _displayRide.notes,
+      ),
+    );
+
+    if (result == null) return; // Натиснули Cancel
+
+    final newTitle = result['title']!;
+    final newNotes = result['notes']!;
+
+    if (newTitle == _displayRide.title && newNotes == _displayRide.notes) return;
+
+    // 2. Сервісний виклик
+    final success = await _rideService.updateRide(_displayRide.id, newTitle, newNotes);
+
+    if (success && mounted) {
+      setState(() {
+        _displayRide = RideModel(
+          id: _displayRide.id,
+          title: newTitle,
+          notes: newNotes,
+          date: _displayRide.date,
+          distance: _displayRide.distance,
+          duration: _displayRide.duration,
+          avgSpeed: _displayRide.avgSpeed,
+          maxSpeed: _displayRide.maxSpeed,
+          routeData: _displayRide.routeData,
+        );
+      });
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ride updated!')));
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to update')));
+    }
+  }
+
+  // --- ЛОГІКА ВИДАЛЕННЯ ---
+  Future<void> _onDeletePressed() async {
+    // 1. Показуємо діалог
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => const DeleteRideDialog(),
+    );
+
+    if (confirm != true) return;
+
+    setState(() => _isDeleting = true);
+    // 2. Сервісний виклик
+    final success = await _rideService.deleteRide(_displayRide.id);
+    if (!mounted) return;
+    setState(() => _isDeleting = false);
+
+    if (success) {
+      Navigator.of(context).pop(); 
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ride deleted')));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to delete')));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final screenHeight = MediaQuery.of(context).size.height;
-    final mapHeight = screenHeight * 0.35;
+    final mapHeight = screenHeight * 0.45;
+    final dateStr = DateFormat('MMMM d, yyyy \'at\' HH:mm').format(_displayRide.date);
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
-      
       appBar: AppBar(
         title: const Text('Ride Details'),
         centerTitle: true,
         leading: const BackButton(),
         actions: [
-          // Меню дій (Edit/Delete)
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
-            color: theme.colorScheme.surface,
-            surfaceTintColor: Colors.transparent,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            onSelected: (String value) {
-              // TODO: Handle actions
-            },
-            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-              const PopupMenuItem<String>(
-                value: 'edit',
-                child: Row(
-                  children: [
-                    Icon(Icons.edit_outlined, color: textSecondaryColor),
-                    SizedBox(width: 8),
-                    Text('Edit'),
-                  ],
+          if (_isDeleting)
+            const Padding(
+              padding: EdgeInsets.only(right: 16.0),
+              child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+            )
+          else
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert),
+              color: theme.colorScheme.surface,
+              surfaceTintColor: Colors.transparent,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              onSelected: (String value) {
+                if (value == 'delete') _onDeletePressed();
+                if (value == 'edit') _onEditPressed();
+              },
+              itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                const PopupMenuItem<String>(
+                  value: 'edit',
+                  child: Row(
+                    children: [
+                      Icon(Icons.edit_outlined, color: textSecondaryColor),
+                      SizedBox(width: 8),
+                      Text('Edit'),
+                    ],
+                  ),
                 ),
-              ),
-              const PopupMenuItem<String>(
-                value: 'delete',
-                child: Row(
-                  children: [
-                    Icon(Icons.delete_outline, color: errorColor),
-                    SizedBox(width: 8),
-                    Text('Delete', style: TextStyle(color: errorColor)),
-                  ],
+                const PopupMenuItem<String>(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete_outline, color: errorColor),
+                      SizedBox(width: 8),
+                      Text('Delete', style: TextStyle(color: errorColor)),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
         ],
       ),
       
@@ -59,74 +153,38 @@ class RideDetailsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. КАРТА (Статична заглушка)
-           ClipRRect(
+            ClipRRect(
               borderRadius: BorderRadius.circular(24.0),
               child: SizedBox( 
                 height: mapHeight,
                 width: double.infinity,
-                child: Image.asset(
-                  'assets/icons/map.png',
-                  fit: BoxFit.cover, 
-                ),
+                child: RouteMap(routeData: _displayRide.routeData), 
               ),
             ),
-           SizedBox(height: 24),
+            const SizedBox(height: 24),
 
-            // 2. НАЗВА ПОЇЗДКИ
-            Text(
-              'Morning Lake Loop',
-              style: theme.textTheme.headlineMedium, // H2 Bold
-            ),
+            Text(_displayRide.title, style: theme.textTheme.headlineMedium),
+            const SizedBox(height: 24),
+
+            DetailItem(icon: Icons.straighten, label: 'Distance', value: '${_displayRide.distance.toStringAsFixed(2)} km'),
+            DetailItem(icon: Icons.timer_outlined, label: 'Duration', value: _displayRide.duration),
+            DetailItem(icon: Icons.speed, label: 'Avg Speed', value: '${_displayRide.avgSpeed.toStringAsFixed(1)} km/h'),
+            DetailItem(icon: Icons.rocket_launch_outlined, label: 'Max Speed', value: '${_displayRide.maxSpeed.toStringAsFixed(1)} km/h'),
+            DetailItem(icon: Icons.calendar_today_outlined, label: 'Date', value: dateStr, isSmallValue: true),
 
             const SizedBox(height: 24),
 
-            // 3. СПИСОК МЕТРИК 
-            const DetailItem(
-              icon: Icons.straighten, 
-              label: 'Distance', 
-              value: '45,53 km'
-            ),
-            const DetailItem(
-              icon: Icons.timer_outlined, 
-              label: 'Duration', 
-              value: '1:30:43'
-            ),
-            const DetailItem(
-              icon: Icons.speed, 
-              label: 'Avg Speed', 
-              value: '30,12 km/h'
-            ),
-            const DetailItem(
-              icon: Icons.rocket_launch_outlined, 
-              label: 'Max Speed', 
-              value: '53,25 km/h'
-            ),
-            const DetailItem(
-              icon: Icons.calendar_today_outlined, 
-              label: 'Date', 
-              value: 'October 27, 2025 at 12:45',
-              isSmallValue: true, 
-            ),
-
-            const SizedBox(height: 24),
-
-            // 4. НОТАТКИ
-            Text('Notes', style: theme.textTheme.bodyLarge),
-            const SizedBox(height: 8),
+            if (_displayRide.notes.isNotEmpty) ...[ 
+               Text('Notes', style: theme.textTheme.bodyLarge),
+               const SizedBox(height: 8),
+               Container(
+                 width: double.infinity,
+                 padding: const EdgeInsets.all(16),
+                 decoration: BoxDecoration(color: onSurfaceColor, borderRadius: BorderRadius.circular(15)),
+                 child: Text(_displayRide.notes, style: theme.textTheme.bodyLarge),
+               ),
+            ],
             
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: onSurfaceColor, 
-                borderRadius: BorderRadius.circular(15),
-              ),
-              child: Text(
-                'TOP Weather conditions',
-                style: theme.textTheme.bodyLarge,
-              ),
-            ),
             SizedBox(height: screenHeight * 0.037),
           ],
         ),

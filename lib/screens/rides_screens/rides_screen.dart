@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:velotracker/screens/rides_screens/ride_details_screen.dart'; // Екран деталей
+import 'package:velotracker/services/ride_service.dart'; // Сервіс
 import 'package:velotracker/theme/app_theme.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:velotracker/models/ride_model.dart';
@@ -14,34 +16,48 @@ class RidesScreen extends StatefulWidget {
 }
 
 class _RidesScreenState extends State<RidesScreen> {
-  //Заглужка
-  final List<RideModel> _allRides = [
-    RideModel(id: '1', title: 'Morning Lake Loop', date: DateTime.now(), distance: 45.53, duration: '1:30:43', avgSpeed: 34.3),
-    RideModel(id: '2', title: 'City Commute', date: DateTime.now().subtract(const Duration(days: 1)), distance: 12.4, duration: '0:45:10', avgSpeed: 18.5),
-    RideModel(id: '3', title: 'Night Ride', date: DateTime.now().subtract(const Duration(days: 5)), distance: 22.0, duration: '1:10:00', avgSpeed: 20.1),
-  ];
+  final RideService _rideService = RideService();
   
-  // Заглужка порожня 
-  // final List<RideModel> _allRides = []; 
-
+  List<RideModel> _allRides = []; // Тут будуть реальні дані
   List<RideModel> _filteredRides = [];
+  bool _isLoading = true; // Стан завантаження
+  
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
-  
-  // Зберігаємо, яка кнопка фільтра обрана (0=All, 1=Week, 2=Month)
   int _selectedFilterIndex = 0; 
 
   @override
   void initState() {
     super.initState();
-    _filteredRides = _allRides;
+    _loadRides(); // Завантажуємо дані при старті
   }
 
-  // Логіка пошуку поїздок за назвою
+  // Функція завантаження
+  Future<void> _loadRides() async {
+    setState(() => _isLoading = true);
+    
+    // Стукаємо на сервер
+    final rides = await _rideService.getUserRides();
+    
+    // Сортуємо: нові зверху
+    rides.sort((a, b) => b.date.compareTo(a.date));
+
+    if (mounted) {
+      setState(() {
+        _allRides = rides;
+        _filteredRides = rides; // Спочатку показуємо всі
+        _isLoading = false;
+      });
+      // Застосуємо фільтр, якщо він був обраний
+      _applyFilter(_selectedFilterIndex);
+    }
+  }
+
+  // Логіка пошуку
   void _runSearch(String query) {
     setState(() {
       if (query.isEmpty) {
-        _filteredRides = _allRides;
+        _applyFilter(_selectedFilterIndex); // Повертаємо поточний фільтр
       } else {
         _filteredRides = _allRides
             .where((ride) => ride.title.toLowerCase().contains(query.toLowerCase()))
@@ -50,28 +66,55 @@ class _RidesScreenState extends State<RidesScreen> {
     });
   }
 
+  // Логіка фільтрів (All / Week / Month)
+  void _applyFilter(int index) {
+    setState(() {
+      _selectedFilterIndex = index;
+      final now = DateTime.now();
+      
+      if (index == 0) {
+        // All
+        _filteredRides = _allRides;
+      } else if (index == 1) {
+        // Week (останні 7 днів)
+        _filteredRides = _allRides.where((ride) {
+          return now.difference(ride.date).inDays <= 7;
+        }).toList();
+      } else if (index == 2) {
+        // Month (останні 30 днів)
+        _filteredRides = _allRides.where((ride) {
+          return now.difference(ride.date).inDays <= 30;
+        }).toList();
+      }
+    });
+  }
+  
+  // Оновлення списку при поверненні з деталей (на випадок видалення/зміни)
+  Future<void> _refreshList() async {
+    await _loadRides();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final bool hasRides = _allRides.isNotEmpty;
+    // Показуємо пустий стан тільки якщо завантаження завершилось і список пустий
+    final bool isEmptyState = !_isLoading && _allRides.isEmpty; 
 
     return GestureDetector(
-      onTap: () {
-        FocusScope.of(context).unfocus(); 
-      },
+      onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         backgroundColor: theme.colorScheme.surface,
 
-        // app bar
+        // --- APP BAR ---
         appBar: _isSearching
-            ? AppBar( //шукаєм
+            ? AppBar( 
                 leading: IconButton(
                   icon: const Icon(Icons.arrow_back),
                   onPressed: () {
                     setState(() {
-                      _isSearching = false; // Виходимо з пошуку
+                      _isSearching = false; 
                       _searchController.clear();
-                      _filteredRides = _allRides;
+                      _applyFilter(_selectedFilterIndex);
                     });
                   },
                 ),
@@ -86,7 +129,7 @@ class _RidesScreenState extends State<RidesScreen> {
                   ),
                 ),
               )
-            : AppBar(//дефолт
+            : AppBar(
                 automaticallyImplyLeading: false,
                 leading: Padding(
                   padding: const EdgeInsets.only(left: 16.0),
@@ -103,75 +146,78 @@ class _RidesScreenState extends State<RidesScreen> {
                 title: const Text('Rides'),
                 centerTitle: true,
                 actions: [
-                  // Показуємо лупу тільки якщо є поїздки
-                  if (hasRides)
+                  if (!isEmptyState) // Ховаємо пошук, якщо нема чого шукати
                     Padding(
                       padding: const EdgeInsets.only(right: 16.0),
                       child: IconButton(
                         icon: const Icon(Icons.search),
                         onPressed: () {
                           setState(() {
-                            _isSearching = true; // Вмикаємо пошук
+                            _isSearching = true;
                           });
                         },
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        style: IconButton.styleFrom(tapTargetSize: MaterialTapTargetSize.shrinkWrap),
                       ),
                     )
                 ],
               ),
 
-        // тіло екрану
+        // --- BODY ---
         body: SafeArea(
-          child: hasRides
-              ? _buildDataContent(theme) // Показуємо список
-              : _buildEmptyState(theme), // Показуємо "No Rides Yet"
+          child: _isLoading 
+              ? const Center(child: CircularProgressIndicator()) // Крутилка
+              : isEmptyState
+                  ? _buildEmptyState(theme) // Пустий екран
+                  : RefreshIndicator( // Можливість потягнути вниз для оновлення
+                      onRefresh: _refreshList,
+                      child: _buildDataContent(theme),
+                    ),
         ),
       ),
     );
   }
 
-  // Віджет, коли є дані
   Widget _buildDataContent(ThemeData theme) {
+    // Рахуємо загальну статистику для карток зверху
+    double totalDist = 0;
+    double maxSpeed = 0;
+    for (var r in _allRides) {
+      totalDist += r.distance;
+      if (r.maxSpeed > maxSpeed) maxSpeed = r.maxSpeed;
+    }
+
     return Column(
       children: [
-        // Якщо не шукаємо, показуємо фільтри і статистику
         if (!_isSearching) ...[
           const SizedBox(height: 16),
           
-          // 1. філтр
+          // Фільтр
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: SlidingSegmentedControl(
               selectedIndex: _selectedFilterIndex,
               values: const ['All', 'Week', 'Month'],
-              onValueChanged: (index) {
-                setState(() {
-                  _selectedFilterIndex = index;
-                });
-              },
+              onValueChanged: _applyFilter,
             ),
           ),
           
           const SizedBox(height: 16),
 
-          // 2. стаистика
+          // Статистика (динамічна!)
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
-              children: const [
-                StatsCard(label: 'Total Dist.', value: '150.5 km'),
-                StatsCard(label: 'Total Rides', value: '12'),
-                StatsCard(label: 'Max Speed', value: '45.2', unit: 'km/h'),
+              children: [
+                StatsCard(label: 'Total Dist.', value: '${totalDist.toStringAsFixed(1)} km'),
+                StatsCard(label: 'Total Rides', value: '${_allRides.length}'),
+                StatsCard(label: 'Max Speed', value: maxSpeed.toStringAsFixed(1), unit: 'km/h'),
               ],
             ),
           ),
           const SizedBox(height: 24),
         ],
 
-        // 3. список поїздок
+        // Список
         Expanded(
           child: _filteredRides.isEmpty
               ? Center(
@@ -184,10 +230,18 @@ class _RidesScreenState extends State<RidesScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   itemCount: _filteredRides.length,
                   itemBuilder: (context, index) {
+                    final ride = _filteredRides[index];
                     return RideCard(
-                      ride: _filteredRides[index],
-                      onTap: () {
-                        // TODO: Перехід на деталі
+                      ride: ride,
+                      onTap: () async {
+                        // Перехід на деталі
+                        await Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => RideDetailsScreen(ride: ride),
+                          ),
+                        );
+                        // Оновити список, якщо повернулись (раптом там буде видалення)
+                        _refreshList(); 
                       },
                     );
                   },
@@ -197,37 +251,24 @@ class _RidesScreenState extends State<RidesScreen> {
     );
   }
 
-  // Віджет, коли пусто 
   Widget _buildEmptyState(ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Column(
         children: [
           const SizedBox(height: 16),
-          
-          // Фільтр все одно показуємо
           SlidingSegmentedControl(
             selectedIndex: _selectedFilterIndex,
             values: const ['All', 'Week', 'Month'],
-            onValueChanged: (index) {
-              setState(() {
-                _selectedFilterIndex = index;
-              });
-            },
+            onValueChanged: (index) {}, // Неактивний
           ),
-          
-          // Картинка і текст "Пусто"
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 SvgPicture.asset(
-                  'assets/icons/logo_welcome_screen.svg',
+                  'assets/icons/logo_welcome_screen.svg', // Твоя картинка
                   width: 200,
-                  colorFilter: ColorFilter.mode(
-                    theme.colorScheme.primary,
-                    BlendMode.srcIn,
-                  ),
                 ),
                 const SizedBox(height: 24),
                 Text(
@@ -244,16 +285,6 @@ class _RidesScreenState extends State<RidesScreen> {
               ],
             ),
           ),
-
-          // Кнопка "Почати"
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {},
-              child: const Text('Start Your First Ride'),
-            ),
-          ),
-          const SizedBox(height: 16),
         ],
       ),
     );
