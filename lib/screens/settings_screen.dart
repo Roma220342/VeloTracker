@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:velotracker/services/settings_service.dart';
+import 'package:velotracker/screens/welcom_screens/welcome_screen.dart'; 
 import 'package:velotracker/theme/app_theme.dart';
 import 'package:velotracker/widgets/settings_widgets/setting_item.dart';
 import 'package:velotracker/widgets/settings_widgets/unit_option_button.dart';
+import 'package:velotracker/widgets/settings_widgets/logout_dialog.dart'; 
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -11,174 +14,181 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool _isKmSelected = true;
-  bool _isDarkMode = false;
-  // Змінна _currentIndex видалена, оскільки навігацією керує MainScreen
+  final SettingsController _controller = SettingsController();
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.loadSettings();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _showLogoutDialog() async {
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => const LogoutDialog(),
+    );
+
+    if (confirm == true) {
+      await _controller.logout(); 
+      
+      if (!mounted) return;
+  
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const WelcomeScreen()),
+        (route) => false,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
-      
-      appBar: AppBar(
-        title: const Text('Settings'),
-        centerTitle: true,
-        automaticallyImplyLeading: false, 
-      ),
-      
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+    return ListenableBuilder(
+      listenable: _controller,
+      builder: (context, child) {
+        if (_controller.isLoading) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
 
-              Text('App Preferences', style: theme.textTheme.bodyLarge),
-              const SizedBox(height: 16),
-              
-              Container(
-                padding: const EdgeInsets.all(32),
-                decoration: BoxDecoration(
-                  color: onSurfaceColor, 
-                  borderRadius: BorderRadius.circular(25),
-                ),
-                child: Column(
-                  children: [
-                    
-                    const SettingItem(
-                      icon: Icons.straighten,
-                      title: 'Units of Measure',
+        return Scaffold(
+          backgroundColor: theme.colorScheme.surface,
+          appBar: AppBar(
+            title: const Text('Settings'),
+            centerTitle: true,
+            automaticallyImplyLeading: false,
+          ),
+          body: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('App Preferences', style: theme.textTheme.bodyLarge),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(32),
+                    decoration: BoxDecoration(
+                      color: onSurfaceColor,
+                      borderRadius: BorderRadius.circular(25),
                     ),
-                    
-                    const SizedBox(height: 16),
-
-                    // Custom Animated Switcher (Km / Miles)
-                    Container(
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surface, 
-                        borderRadius: BorderRadius.circular(50),
-                      ),
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          final double segmentWidth = constraints.maxWidth / 2; 
-
-                          return Stack(
-                            children: [
-                              // Анімований Фон (Зелений)
-                              AnimatedPositioned(
-                                duration: const Duration(milliseconds: 200),
-                                curve: Curves.easeInOut,
-                                top: 0,
-                                bottom: 0,
-                                left: _isKmSelected ? 0 : segmentWidth,
-                                width: segmentWidth,
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: theme.colorScheme.primary,
-                                    borderRadius: BorderRadius.circular(50),
-                                  ),
-                                ),
-                              ),
-                              
-                              Row(
+                    child: Column(
+                      children: [
+                        const SettingItem(
+                          icon: Icons.straighten,
+                          title: 'Units of Measure',
+                        ),
+                        const SizedBox(height: 16),
+                        
+                        // Перемикач Km/Miles
+                        Container(
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surface,
+                            borderRadius: BorderRadius.circular(50),
+                          ),
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              final double segmentWidth = constraints.maxWidth / 2;
+                              return Stack(
                                 children: [
-                                  UnitOptionButton(
-                                    title: 'Km',
-                                    isActive: _isKmSelected, 
-                                    onTap: () {
-                                      setState(() {
-                                        _isKmSelected = true;
-                                      });
-                                    },
+                                  AnimatedPositioned(
+                                    duration: const Duration(milliseconds: 200),
+                                    curve: Curves.easeInOut,
+                                    top: 0, bottom: 0,
+                                    left: _controller.isKmSelected ? 0 : segmentWidth,
+                                    width: segmentWidth,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: theme.colorScheme.primary,
+                                        borderRadius: BorderRadius.circular(50),
+                                      ),
+                                    ),
                                   ),
-                                  UnitOptionButton(
-                                    title: 'Miles',
-                                    isActive: !_isKmSelected, 
-                                    onTap: () {
-                                      setState(() {
-                                        _isKmSelected = false;
-                                      });
-                                    },
+                                  Row(
+                                    children: [
+                                      UnitOptionButton(
+                                        title: 'Km',
+                                        isActive: _controller.isKmSelected,
+                                        onTap: () => _controller.toggleUnit(true),
+                                      ),
+                                      UnitOptionButton(
+                                        title: 'Miles',
+                                        isActive: !_controller.isKmSelected,
+                                        onTap: () => _controller.toggleUnit(false),
+                                      ),
+                                    ],
                                   ),
                                 ],
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 32),
-                    const Divider(height: 1, color: outlineColor),
-                    const SizedBox(height: 32),
+                              );
+                            },
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 32),
+                        const Divider(height: 1, color: outlineColor),
+                        const SizedBox(height: 32),
 
-                    // Dark Mode Switch
-                    SettingItem(
-                      icon: Icons.dark_mode_outlined,
-                      title: 'Dark Mode',
-                      trailing: Switch(
-                        value: _isDarkMode,
-                        activeThumbColor: primaryColor,
-                        inactiveThumbColor: textPrimaryColor,
-                        onChanged: (value) {
-                          setState(() {
-                            _isDarkMode = value;
-                            // TODO: Реалізувати зміну теми
-                          });
-                        },
-                      ),
+                        // Dark Mode
+                        SettingItem(
+                          icon: Icons.dark_mode_outlined,
+                          title: 'Dark Mode',
+                          trailing: Switch(
+                            value: _controller.isDarkMode,
+                            activeThumbColor: primaryColor,
+                            inactiveThumbColor: textPrimaryColor,
+                            onChanged: _controller.toggleTheme,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 48),
+                  Text('Account Actions', style: theme.textTheme.bodyLarge),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(32),
+                    decoration: BoxDecoration(
+                      color: onSurfaceColor,
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    child: Column(
+                      children: [
+                        SettingItem(
+                          icon: Icons.person_outline,
+                          title: 'Email',
+                          subtitle: _controller.userEmail,
+                          iconColor: textSecondaryColor,
+                          iconBgColor: outlineColor,
+                        ),
+                        const SizedBox(height: 32),
+                        const Divider(height: 1, color: outlineColor),
+                        const SizedBox(height: 32),
+                        SettingItem(
+                          icon: Icons.logout,
+                          title: 'Log Out',
+                          iconColor: errorColor,
+                          iconBgColor: errorContainerColor,
+                          isDestructive: true,
+                          onTap: _showLogoutDialog, // Тут нічого змінювати не треба
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-
-              const SizedBox(height: 48),
-
-              Text('Account Actions', style: theme.textTheme.bodyLarge),
-              const SizedBox(height: 16),
-
-              Container(
-                padding: const EdgeInsets.all(32),
-                decoration: BoxDecoration(
-                  color: onSurfaceColor,
-                  borderRadius: BorderRadius.circular(25),
-                ),
-                child: Column(
-                  children: [
-                    // Email (Non-editable)
-                    const SettingItem(
-                      icon: Icons.person_outline,
-                      title: 'Email',
-                      subtitle: 'user@example.com',
-                      iconColor: textSecondaryColor, 
-                      iconBgColor: outlineColor,
-                    ),
-                    
-                    const SizedBox(height: 32),
-                    const Divider(height: 1, color: outlineColor),
-                    const SizedBox(height: 32),
-
-                    // Log Out Button
-                    SettingItem(
-                      icon: Icons.logout,
-                      title: 'Log Out',
-                      iconColor: errorColor, 
-                      iconBgColor: errorContainerColor,
-                      isDestructive: true, 
-                      onTap: () {
-                        // TODO: Логіка виходу (очистка токена і перехід на Welcome)
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

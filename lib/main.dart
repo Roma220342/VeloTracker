@@ -3,9 +3,11 @@ import 'package:velotracker/screens/welcom_screens/splash_screen.dart';
 import 'screens/rides_screens/rides_screen.dart';
 import 'screens/track_screns/track_screen.dart';
 import 'screens/settings_screen.dart';
+import 'package:velotracker/services/settings_service.dart';
 import 'package:velotracker/theme/app_theme.dart';
 
 void main() {
+  SettingsController().loadSettings();
   runApp(const VeloTrackerApp());
 }
 

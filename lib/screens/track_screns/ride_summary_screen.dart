@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:velotracker/main.dart';
 import 'package:velotracker/services/ride_service.dart';
+import 'package:velotracker/services/settings_service.dart'; // 👇 Імпорт налаштувань
 import 'package:velotracker/theme/app_theme.dart';
 import 'package:velotracker/widgets/tracks_widgets/discard_dialog.dart';
 import 'package:velotracker/widgets/tracks_widgets/stat_item.dart';
@@ -67,7 +68,6 @@ class _RideSummaryScreenState extends State<RideSummaryScreen> {
 
   String _formatDuration(Duration d) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
-
     if (d.inHours > 0) {
       return "${d.inHours}:${twoDigits(d.inMinutes.remainder(60))}:${twoDigits(d.inSeconds.remainder(60))}";
     } else {
@@ -78,10 +78,12 @@ class _RideSummaryScreenState extends State<RideSummaryScreen> {
   Future<void> _saveRide() async {
     setState(() => _isSaving = true);
 
+    // ВАЖЛИВО: На сервер відправляємо оригінальні дані (в км), 
+    // незалежно від того, що вибрав користувач.
     final success = await _rideService.saveRide(
       title: _nameController.text.trim().isEmpty ? "My Ride" : _nameController.text.trim(),
       notes: _notesController.text.trim(),
-      distance: widget.distanceKm,
+      distance: widget.distanceKm, 
       duration: _formatDuration(widget.duration),
       avgSpeed: widget.avgSpeed,
       maxSpeed: widget.maxSpeed,
@@ -111,136 +113,159 @@ class _RideSummaryScreenState extends State<RideSummaryScreen> {
     final theme = Theme.of(context);
     final screenHeight = MediaQuery.of(context).size.height;
 
-    final distStr = widget.distanceKm.toStringAsFixed(2);
-    final timeStr = _formatDuration(widget.duration);
-    final avgStr = widget.avgSpeed.toStringAsFixed(1);
-    final maxStr = widget.maxSpeed.toStringAsFixed(1);
+    // 👇 Слухаємо налаштування для відображення
+    return ListenableBuilder(
+      listenable: SettingsController(),
+      builder: (context, child) {
+        final settings = SettingsController();
 
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: Scaffold(
-        backgroundColor: theme.colorScheme.surface,
-        appBar: AppBar(
-          leading: const BackButton(),
-          elevation: 0,
-        ),
-        body: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return SingleChildScrollView(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                  child: IntrinsicHeight(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Center(
-                            child: Column(
-                              children: [
-                                Text(
-                                  'Ride Complete',
-                                  style: theme.textTheme.headlineLarge,
-                                  textAlign: TextAlign.center,
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Check your final stats below',
-                                  style: theme.textTheme.bodyMedium,
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          Container(
-                            padding: const EdgeInsets.all(24),
-                            decoration: BoxDecoration(
-                              color: onSurfaceColor,
-                              borderRadius: BorderRadius.circular(25),
-                            ),
-                            child: Column(
-                              children: [
-                                Row(
+        // Конвертуємо для відображення
+        final distVal = settings.convertDistance(widget.distanceKm);
+        final avgVal = settings.convertSpeed(widget.avgSpeed);
+        final maxVal = settings.convertSpeed(widget.maxSpeed);
+        
+        final timeStr = _formatDuration(widget.duration);
+
+        return GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: Scaffold(
+            backgroundColor: theme.colorScheme.surface,
+            appBar: AppBar(
+              leading: const BackButton(),
+              elevation: 0,
+            ),
+            body: SafeArea(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                      child: IntrinsicHeight(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Center(
+                                child: Column(
                                   children: [
-                                    StatItem(label: 'Distance', value: distStr, unit: 'km'),
-                                    StatItem(label: 'Duration', value: timeStr, unit: ''),
+                                    Text(
+                                      'Ride Complete',
+                                      style: theme.textTheme.headlineLarge,
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Check your final stats below',
+                                      style: theme.textTheme.bodyMedium,
+                                      textAlign: TextAlign.center,
+                                    ),
                                   ],
                                 ),
-                                const SizedBox(height: 32),
-                                Row(
-                                  children: [
-                                    StatItem(label: 'Avg.Speed', value: avgStr, unit: 'km/h'),
-                                    StatItem(label: 'Max.Speed', value: maxStr, unit: 'km/h'),
-                                  ],
+                              ),
+                              const SizedBox(height: 24),
+                              Container(
+                                padding: const EdgeInsets.all(24),
+                                decoration: BoxDecoration(
+                                  color: onSurfaceColor,
+                                  borderRadius: BorderRadius.circular(25),
                                 ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 32),
-                          Text('Ride Name', style: theme.textTheme.bodyMedium),
-                          const SizedBox(height: 8),
-                          TextField(
-                            controller: _nameController,
-                            decoration: const InputDecoration(hintText: 'Enter a name for your ride'),
-                          ),
-                          const SizedBox(height: 16),
-                          Text('Notes (Optional)', style: theme.textTheme.bodyMedium),
-                          const SizedBox(height: 8),
-                          TextField(
-                            controller: _notesController,
-                            maxLines: 3,
-                            decoration: const InputDecoration(hintText: 'Add some notes about the ride'),
-                          ),
-                          const Spacer(),
-                          const SizedBox(height: 24),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: _isSaving ? null : _saveRide,
-                              child: _isSaving
-                                  ? const SizedBox(
-                                      height: 24,
-                                      width: 24,
-                                      child: CircularProgressIndicator(color: Colors.white),
-                                    )
-                                  : const Text('Save Ride'),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton(
-                              onPressed: _isSaving
-                                  ? null
-                                  : () {
-                                      showDialog(
-                                        context: context,
-                                        builder: (context) => DiscardDialog(
-                                          onConfirm: () {
-                                            Navigator.of(context).pushAndRemoveUntil(
-                                              MaterialPageRoute(builder: (context) => const MainScreen()),
-                                              (route) => false,
-                                            );
-                                          },
+                                child: Column(
+                                  children: [
+                                    Row(
+                                      children: [
+                                        StatItem(
+                                          label: 'Distance', 
+                                          value: distVal.toStringAsFixed(2), // Конвертоване
+                                          unit: settings.distanceUnit
                                         ),
-                                      );
-                                    },
-                              child: const Text('Discard Ride'),
-                            ),
+                                        StatItem(label: 'Duration', value: timeStr, unit: ''),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 32),
+                                    Row(
+                                      children: [
+                                        StatItem(
+                                          label: 'Avg.Speed', 
+                                          value: avgVal.toStringAsFixed(1), // Конвертоване
+                                          unit: settings.speedUnit
+                                        ),
+                                        StatItem(
+                                          label: 'Max.Speed', 
+                                          value: maxVal.toStringAsFixed(1), // Конвертоване
+                                          unit: settings.speedUnit
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              // ... (далі все без змін: поля вводу, кнопки) ...
+                              const SizedBox(height: 32),
+                              Text('Ride Name', style: theme.textTheme.bodyMedium),
+                              const SizedBox(height: 8),
+                              TextField(
+                                controller: _nameController,
+                                decoration: const InputDecoration(hintText: 'Enter a name for your ride'),
+                              ),
+                              const SizedBox(height: 16),
+                              Text('Notes (Optional)', style: theme.textTheme.bodyMedium),
+                              const SizedBox(height: 8),
+                              TextField(
+                                controller: _notesController,
+                                maxLines: 3,
+                                decoration: const InputDecoration(hintText: 'Add some notes about the ride'),
+                              ),
+                              const Spacer(),
+                              const SizedBox(height: 24),
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                  onPressed: _isSaving ? null : _saveRide,
+                                  child: _isSaving
+                                      ? const SizedBox(
+                                          height: 24,
+                                          width: 24,
+                                          child: CircularProgressIndicator(color: Colors.white),
+                                        )
+                                      : const Text('Save Ride'),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton(
+                                  onPressed: _isSaving
+                                      ? null
+                                      : () {
+                                          showDialog(
+                                            context: context,
+                                            builder: (context) => DiscardDialog(
+                                              onConfirm: () {
+                                                Navigator.of(context).pushAndRemoveUntil(
+                                                  MaterialPageRoute(builder: (context) => const MainScreen()),
+                                                  (route) => false,
+                                                );
+                                              },
+                                            ),
+                                          );
+                                        },
+                                  child: const Text('Discard Ride'),
+                                ),
+                              ),
+                              SizedBox(height: screenHeight * 0.037),
+                            ],
                           ),
-                          SizedBox(height: screenHeight * 0.037),
-                        ],
+                        ),
                       ),
                     ),
-                  ),
-                ),
-              );
-            },
+                  );
+                },
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      }
     );
   }
 }

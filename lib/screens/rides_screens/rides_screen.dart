@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:velotracker/screens/rides_screens/ride_details_screen.dart'; // Екран деталей
 import 'package:velotracker/services/ride_service.dart'; // Сервіс
+import 'package:velotracker/services/settings_service.dart'; // 👇 Імпорт налаштувань
 import 'package:velotracker/theme/app_theme.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:velotracker/models/ride_model.dart';
@@ -177,77 +178,100 @@ class _RidesScreenState extends State<RidesScreen> {
   }
 
   Widget _buildDataContent(ThemeData theme) {
-    // Рахуємо загальну статистику для карток зверху
-    double totalDist = 0;
-    double maxSpeed = 0;
+    // Рахуємо загальну статистику для карток зверху (В КІЛОМЕТРАХ)
+    double totalDistKm = 0;
+    double maxSpeedKmh = 0;
     for (var r in _allRides) {
-      totalDist += r.distance;
-      if (r.maxSpeed > maxSpeed) maxSpeed = r.maxSpeed;
+      totalDistKm += r.distance;
+      if (r.maxSpeed > maxSpeedKmh) maxSpeedKmh = r.maxSpeed;
     }
 
-    return Column(
-      children: [
-        if (!_isSearching) ...[
-          const SizedBox(height: 16),
-          
-          // Фільтр
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: SlidingSegmentedControl(
-              selectedIndex: _selectedFilterIndex,
-              values: const ['All', 'Week', 'Month'],
-              onValueChanged: _applyFilter,
-            ),
-          ),
-          
-          const SizedBox(height: 16),
+    // 👇 Слухаємо налаштування для конвертації
+    return ListenableBuilder(
+      listenable: SettingsController(),
+      builder: (context, child) {
+        final settings = SettingsController();
+        
+        // Конвертуємо
+        final displayTotal = settings.convertDistance(totalDistKm);
+        final displayMax = settings.convertSpeed(maxSpeedKmh);
 
-          // Статистика (динамічна!)
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                StatsCard(label: 'Total Dist.', value: '${totalDist.toStringAsFixed(1)} km'),
-                StatsCard(label: 'Total Rides', value: '${_allRides.length}'),
-                StatsCard(label: 'Max Speed', value: maxSpeed.toStringAsFixed(1), unit: 'km/h'),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-        ],
-
-        // Список
-        Expanded(
-          child: _filteredRides.isEmpty
-              ? Center(
-                  child: Text(
-                    'No rides found',
-                    style: theme.textTheme.bodyLarge?.copyWith(color: textSecondaryColor),
-                  ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: _filteredRides.length,
-                  itemBuilder: (context, index) {
-                    final ride = _filteredRides[index];
-                    return RideCard(
-                      ride: ride,
-                      onTap: () async {
-                        // Перехід на деталі
-                        await Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => RideDetailsScreen(ride: ride),
-                          ),
-                        );
-                        // Оновити список, якщо повернулись (раптом там буде видалення)
-                        _refreshList(); 
-                      },
-                    );
-                  },
+        return Column(
+          children: [
+            if (!_isSearching) ...[
+              const SizedBox(height: 16),
+              
+              // Фільтр
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: SlidingSegmentedControl(
+                  selectedIndex: _selectedFilterIndex,
+                  values: const ['All', 'Week', 'Month'],
+                  onValueChanged: _applyFilter,
                 ),
-        ),
-      ],
+              ),
+              
+              const SizedBox(height: 16),
+
+              // Статистика (динамічна!)
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    StatsCard(
+                      label: 'Total Dist.', 
+                      value: displayTotal.toStringAsFixed(1), 
+                      unit: settings.distanceUnit
+                    ),
+                    StatsCard(
+                      label: 'Total Rides', 
+                      value: '${_allRides.length}'
+                    ),
+                    StatsCard(
+                      label: 'Max Speed', 
+                      value: displayMax.toStringAsFixed(1), 
+                      unit: settings.speedUnit
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+
+            // Список
+            Expanded(
+              child: _filteredRides.isEmpty
+                  ? Center(
+                      child: Text(
+                        'No rides found',
+                        style: theme.textTheme.bodyLarge?.copyWith(color: textSecondaryColor),
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: _filteredRides.length,
+                      itemBuilder: (context, index) {
+                        final ride = _filteredRides[index];
+                        return RideCard(
+                          ride: ride,
+                          onTap: () async {
+                            // Перехід на деталі
+                            await Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => RideDetailsScreen(ride: ride),
+                              ),
+                            );
+                            // Оновити список, якщо повернулись
+                            _refreshList(); 
+                          },
+                        );
+                      },
+                    ),
+            ),
+          ],
+        );
+      }
     );
   }
 

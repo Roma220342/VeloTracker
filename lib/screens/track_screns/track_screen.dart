@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:velotracker/models/ride_realtime_data.dart';
 import 'package:velotracker/screens/track_screns/ride_summary_screen.dart';
+import 'package:velotracker/services/settings_service.dart'; // 👇 Імпорт налаштувань
 import 'package:velotracker/services/tracking_service.dart';
 import 'package:velotracker/theme/app_theme.dart';
 import 'package:velotracker/widgets/tracks_widgets/discard_dialog.dart';
@@ -62,20 +63,23 @@ class _TrackScreenState extends State<TrackScreen> {
   }
 
   Future<void> _onFinish() async {
+    // 1. Ставимо на паузу, щоб не втратити дані
     _trackingService.pauseTracking();
     
     setState(() => _currentState = TrackingState.paused);
 
+    // 2. Забираємо СИРІ дані (в км та км/год) для збереження в базу
     final double distanceKm = _trackingService.currentDistanceKm;
     final Duration duration = _trackingService.currentDuration;
     
     final double hours = duration.inSeconds / 3600;
     final double avgSpeed = hours > 0 ? distanceKm / hours : 0;
 
+    // 3. Переходимо на екран підсумків
     await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => RideSummaryScreen(
-          distanceKm: distanceKm,
+          distanceKm: distanceKm, // Передаємо в КМ (база завжди в метричній)
           duration: duration,
           avgSpeed: avgSpeed,
           maxSpeed: _trackingService.maxSpeedKph,
@@ -115,61 +119,87 @@ class _TrackScreenState extends State<TrackScreen> {
     final screenHeight = MediaQuery.of(context).size.height;
     final padding64 = screenHeight * 0.075;
 
-    return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: isPaused ? pauseColor : theme.colorScheme.surface,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          color: textPrimaryColor,
-          onPressed: _onBackPressed,
-        ),
-      ),
-      body: Column(
-        children: [
-          Container(
-            width: double.infinity,
-            color: isPaused ? pauseColor : theme.colorScheme.surface,
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Column(
-              children: [
-                Text(
-                  _formatDuration(_currentData.duration),
-                  style: theme.textTheme.headlineLarge?.copyWith(fontSize: 48),
-                ),
-                Text('Duration', style: theme.textTheme.bodyLarge),
-              ],
+    // 👇 Обгортаємо в ListenableBuilder, щоб слухати зміну одиниць виміру
+    return ListenableBuilder(
+      listenable: SettingsController(),
+      builder: (context, child) {
+        final settings = SettingsController();
+
+        // Конвертуємо поточні дані для відображення (Km -> Miles якщо треба)
+        final double displayDist = settings.convertDistance(_currentData.distanceKm);
+        final double displaySpeed = settings.convertSpeed(_currentData.currentSpeed);
+
+        return Scaffold(
+          backgroundColor: theme.colorScheme.surface,
+          appBar: AppBar(
+            backgroundColor: isPaused ? pauseColor : theme.colorScheme.surface,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              color: textPrimaryColor,
+              onPressed: _onBackPressed,
             ),
           ),
-          SizedBox(height: padding64),
-          
-          Expanded(
-            child: Column(
-              children: [
-                Text(
-                  _currentData.distanceKm.toStringAsFixed(2),
-                  style: theme.textTheme.headlineLarge?.copyWith(fontSize: 152),
+          body: Column(
+            children: [
+              // ВЕРХ: ЧАС (Колір змінюється при паузі)
+              Container(
+                width: double.infinity,
+                color: isPaused ? pauseColor : theme.colorScheme.surface,
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Column(
+                  children: [
+                    Text(
+                      _formatDuration(_currentData.duration),
+                      style: theme.textTheme.headlineLarge?.copyWith(fontSize: 48),
+                    ),
+                    Text('Duration', style: theme.textTheme.bodyLarge),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                Text('Distance (km)', style: theme.textTheme.bodyMedium),
-                SizedBox(height: padding64),
-                Text(
-                  _currentData.currentSpeed.toStringAsFixed(1),
-                  style: theme.textTheme.headlineLarge?.copyWith(fontSize: 128),
+              ),
+              
+              SizedBox(height: padding64),
+              
+              // ЦЕНТР: МЕТРИКИ
+              Expanded(
+                child: Column(
+                  children: [
+                    // Дистанція
+                    Text(
+                      displayDist.toStringAsFixed(2), // Конвертоване значення
+                      style: theme.textTheme.headlineLarge?.copyWith(fontSize: 152),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Distance (${settings.distanceUnit})', // 'km' або 'mi'
+                      style: theme.textTheme.bodyMedium
+                    ),
+                    
+                    SizedBox(height: padding64),
+                    
+                    // Швидкість
+                    Text(
+                      displaySpeed.toStringAsFixed(1), // Конвертоване значення
+                      style: theme.textTheme.headlineLarge?.copyWith(fontSize: 128),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Speed (${settings.speedUnit})', // 'km/h' або 'mph'
+                      style: theme.textTheme.bodyLarge
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                Text('Speed (km/h)', style: theme.textTheme.bodyLarge),
-              ],
-            ),
+              ),
+              
+              // НИЗ: КНОПКИ
+              Padding(
+                padding: EdgeInsets.only(bottom: padding64, left: 16, right: 16),
+                child: _buildControlButtons(),
+              ),
+            ],
           ),
-          
-          Padding(
-            padding: EdgeInsets.only(bottom: padding64, left: 16, right: 16),
-            child: _buildControlButtons(),
-          ),
-        ],
-      ),
+        );
+      }
     );
   }
 

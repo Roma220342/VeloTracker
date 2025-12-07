@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:velotracker/services/settings_service.dart'; // 👇 Імпорт налаштувань
 import 'package:velotracker/theme/app_theme.dart';
 import 'package:velotracker/models/ride_model.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -19,66 +20,80 @@ class RideCard extends StatelessWidget {
     final theme = Theme.of(context);
     final dateStr = DateFormat('MMMM d, yyyy \'at\' HH:mm').format(ride.date);
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: onSurfaceColor,
-          borderRadius: BorderRadius.circular(25),
-        ),
+    // 👇 Слухаємо налаштування (KM/Miles)
+    return ListenableBuilder(
+      listenable: SettingsController(),
+      builder: (context, child) {
+        final settings = SettingsController();
+        
+        // Конвертуємо дані
+        final dist = settings.convertDistance(ride.distance).toStringAsFixed(2);
+        final speed = settings.convertSpeed(ride.avgSpeed).toStringAsFixed(1);
+        final unitD = settings.distanceUnit; // 'km' або 'mi'
+        final unitS = settings.speedUnit;    // 'km/h' або 'mph'
 
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              width: 40,
-              height: 40, 
-              decoration: BoxDecoration(
-                color: primaryContainerColor,
-                shape: BoxShape.circle,
-              ),
-              child: SvgPicture.asset(
-                'assets/icons/logo_rides_screen.svg',
-                
-              ),
+        return GestureDetector(
+          onTap: onTap,
+          child: Container(
+            width: double.infinity,
+            margin: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: onSurfaceColor,
+              borderRadius: BorderRadius.circular(25),
             ),
 
-            const SizedBox(width: 16),
-
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    ride.title,
-                    style: theme.textTheme.titleMedium,
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  width: 40,
+                  height: 40, 
+                  decoration: const BoxDecoration(
+                    color: primaryContainerColor,
+                    shape: BoxShape.circle,
                   ),
-
-                  const SizedBox(height: 4),
-
-                  Text(
-                    '${ride.distance} km · ${ride.avgSpeed} km/h · ${ride.duration}',
-                    style: theme.textTheme.bodyLarge,
+                  child: SvgPicture.asset(
+                    'assets/icons/logo_rides_screen.svg',
                   ),
+                ),
 
-                  Text(
-                    dateStr,
-                    style: theme.textTheme.bodyLarge,
+                const SizedBox(width: 16),
+
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        ride.title,
+                        style: theme.textTheme.titleMedium,
+                      ),
+
+                      const SizedBox(height: 4),
+
+                      // 👇 Оновлений рядок з динамічними одиницями виміру
+                      Text(
+                        '$dist $unitD · $speed $unitS · ${ride.duration}',
+                        style: theme.textTheme.bodyLarge,
+                      ),
+
+                      Text(
+                        dateStr,
+                        style: theme.textTheme.bodyLarge,
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+
+                const Icon(
+                  Icons.chevron_right,
+                  color: textSecondaryColor,
+                ),
+              ],
             ),
-
-            const Icon(
-              Icons.chevron_right,
-              color: textSecondaryColor,
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      }
     );
   }
 }
