@@ -4,10 +4,11 @@ import 'package:velotracker/services/preferences_service.dart';
 import 'package:velotracker/utils/app_logger.dart';
 
 class SettingsController extends ChangeNotifier {
-  // 1. Робимо Singleton, щоб мати доступ до одного й того ж екземпляра всюди
   static final SettingsController _instance = SettingsController._internal();
   factory SettingsController() => _instance;
   SettingsController._internal();
+
+  bool get isGuest => userEmail == 'Guest';
 
   final AuthService _authService = AuthService();
   final PreferencesService _prefsService = PreferencesService();
@@ -17,19 +18,17 @@ class SettingsController extends ChangeNotifier {
   String userEmail = 'Loading...';
   bool isLoading = true;
 
-  // --- ХЕЛПЕРИ ДЛЯ КОНВЕРТАЦІЇ ---
-  
   // Отримати назву одиниці виміру
   String get distanceUnit => isKmSelected ? 'km' : 'mi';
   String get speedUnit => isKmSelected ? 'km/h' : 'mph';
 
-  // Конвертувати дистанцію (вхід завжди в км)
+  // Конвертувати дистанцію 
   double convertDistance(double km) {
     if (isKmSelected) return km;
     return km * 0.621371;
   }
 
-  // Конвертувати швидкість (вхід завжди в км/год)
+  // Конвертувати швидкість 
   double convertSpeed(double kmh) {
     if (isKmSelected) return kmh;
     return kmh * 0.621371;
@@ -37,8 +36,7 @@ class SettingsController extends ChangeNotifier {
 
   // Завантаження налаштувань
   Future<void> loadSettings() async {
-    // (Логіка завантаження залишається такою ж, як була)
-    if (!isLoading) isLoading = true; // Тільки якщо треба оновити UI
+    if (!isLoading) isLoading = true; 
     
     try {
       final isKm = await _prefsService.getUnitSystem();
@@ -48,8 +46,14 @@ class SettingsController extends ChangeNotifier {
       isKmSelected = isKm;
       isDarkMode = isDark;
 
-      if (userProfile != null && userProfile['email'] != null) {
-        userEmail = userProfile['email'];
+     if (userProfile != null && userProfile['email'] != null) {
+        final String rawEmail = userProfile['email'];
+  
+        if (rawEmail.endsWith('@velotracker.anon')) {
+          userEmail = 'Guest';
+        } else {
+          userEmail = rawEmail;
+        }
       } else {
         userEmail = 'No Email';
       }
@@ -58,7 +62,7 @@ class SettingsController extends ChangeNotifier {
       userEmail = 'Connection Error';
     } finally {
       isLoading = false;
-      notifyListeners(); // Це оновить всі екрани
+      notifyListeners();
     }
   }
 
@@ -66,19 +70,9 @@ class SettingsController extends ChangeNotifier {
     if (isKmSelected == isKm) return;
 
     isKmSelected = isKm;
-    notifyListeners(); // Всі екрани моментально змінять цифри
-
+    notifyListeners(); 
     await _prefsService.setUnitSystem(isKm);
     logger.i('Unit system saved: ${isKm ? "km" : "miles"}');
-  }
-
-  Future<void> toggleTheme(bool isDark) async {
-    if (isDarkMode == isDark) return;
-
-    isDarkMode = isDark;
-    notifyListeners();
-
-    await _prefsService.setDarkMode(isDark);
   }
 
   Future<void> logout() async {

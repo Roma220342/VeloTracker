@@ -6,7 +6,7 @@ import 'package:pinput/pinput.dart';
 import 'dart:async';
 
 class CodeVerificationScreen extends StatefulWidget {
-  final String email; // Приймаємо email
+  final String email; 
 
   const CodeVerificationScreen({super.key, required this.email});
 
@@ -16,8 +16,8 @@ class CodeVerificationScreen extends StatefulWidget {
 
 class _CodeVerificationScreenState extends State<CodeVerificationScreen> {
   final AuthService _authService = AuthService();
-  final TextEditingController _pinController = TextEditingController(); // Контролер для коду
-  
+  final TextEditingController _pinController = TextEditingController(); 
+
   Timer? _timer;
   int _start = 60;
   bool _isLoading = false;
@@ -50,26 +50,24 @@ class _CodeVerificationScreenState extends State<CodeVerificationScreen> {
     super.dispose();
   }
 
-  // --- ЛОГІКА ПЕРЕВІРКИ КОДУ ---
+  //  ЛОГІКА ПЕРЕВІРКИ КОДУ 
   Future<void> _verifyCode() async {
     final code = _pinController.text.trim();
     if (code.length != 4) return;
 
     setState(() => _isLoading = true);
 
-    // Викликаємо сервіс
     final success = await _authService.verifyResetCode(widget.email, code);
 
     if (!mounted) return;
     setState(() => _isLoading = false);
 
     if (success) {
-      // Успіх -> Йдемо міняти пароль
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (context) => ResetPasswordScreen(
             email: widget.email,
-            code: code, // Передаємо код далі як "токен" для зміни
+            code: code, 
           ),
         ),
       );
@@ -83,10 +81,10 @@ class _CodeVerificationScreenState extends State<CodeVerificationScreen> {
     }
   }
 
-  // --- ПОВТОРНА ВІДПРАВКА ---
+  //  ПОВТОРНА ВІДПРАВКА 
   Future<void> _resendCode() async {
     setState(() {
-      _start = 60; // Скидаємо таймер
+      _start = 60;
     });
     startTimer();
     

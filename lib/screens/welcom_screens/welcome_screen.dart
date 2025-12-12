@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:velotracker/main.dart';
+import 'package:velotracker/services/auth_service.dart';
 import 'package:velotracker/screens/auth_screens/sign_in_screen.dart';
 import 'package:velotracker/screens/auth_screens/sign_up_screen.dart';
  
-class WelcomeScreen extends StatelessWidget{
+class WelcomeScreen extends StatefulWidget { // Змінили на StatefulWidget для стану завантаження
   const WelcomeScreen({super.key});
+
+  @override
+  State<WelcomeScreen> createState() => _WelcomeScreenState();
+}
+
+class _WelcomeScreenState extends State<WelcomeScreen> {
+  bool _isGuestLoading = false;
    
   @override
   Widget build(BuildContext context) {
@@ -64,20 +72,37 @@ class WelcomeScreen extends StatelessWidget{
                       child: const Text('Sign Up')
                     ),
                   ),
+
                   const SizedBox(height: 16),
-                  TextButton(
-                    style: TextButton.styleFrom(
-                      textStyle: theme.textTheme.bodyLarge,
-                      // ВИПРАВЛЕННЯ 3: Замінено неіснуючий textTertiaryColor на колір з теми (наприклад, onSurface.withOpacity(0.6))
-                      foregroundColor: theme.colorScheme.onSurface, 
-                    ),
-                    onPressed: () {
-                      Navigator.of(context).pushReplacement(
-                          MaterialPageRoute(builder: (context) => const MainScreen()),
-                        );
-                    }, 
-                    child: const Text('Continue as Guest')
-                  ),
+
+                    _isGuestLoading
+                      ? const CircularProgressIndicator()
+                      : TextButton(
+                          style: TextButton.styleFrom(
+                            textStyle: theme.textTheme.bodyLarge,
+                            foregroundColor: theme.colorScheme.onSurface, 
+                          ),
+                          onPressed: () async {
+                            setState(() => _isGuestLoading = true);
+                            
+                            final authService = AuthService(); 
+                            
+                            final success = await authService.loginAnonymously();
+                            
+                           if (!context.mounted) return;
+
+                            if (success) {
+                              Navigator.of(context).pushReplacement(
+                                MaterialPageRoute(builder: (context) => const MainScreen()),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Failed to login as guest')),
+                              );
+                            }
+                          }, 
+                          child: const Text('Continue as Guest')
+                        ),
                 ],
               )
             ],

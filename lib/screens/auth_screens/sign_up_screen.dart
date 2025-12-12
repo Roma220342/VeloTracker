@@ -6,7 +6,12 @@ import 'package:velotracker/services/auth_service.dart';
 import 'package:velotracker/theme/app_theme.dart';
 
 class SignUpScreen extends StatefulWidget {
-  const SignUpScreen({super.key});
+  final bool isGuestConversion;
+  
+  const SignUpScreen({
+    super.key,
+    this.isGuestConversion = false,
+  });
 
   @override
   State<SignUpScreen> createState() => _SignUpScreenState();
@@ -30,8 +35,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
     super.dispose();
   }
 
-  // Реєстрація через Email
-  Future<void> _handleSignUp() async {
+  // ЛОГІКА ДЛЯ ГОЛОВНОЇ КНОПКИ (Email)
+  Future<void> _handleMainAction() async {
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
@@ -45,45 +50,91 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     setState(() => _isLoading = true);
 
-    final success = await _authService.register(name, email, password);
-
-    if (mounted) {
+    // Логіка залишається різною!
+    if (widget.isGuestConversion) {
+      // А) ГІСТЬ: Зберігаємо (оновлюємо) поточний акаунт
+      final error = await _authService.convertGuest(name, email, password);
+      
+      if (!mounted) return;
       setState(() => _isLoading = false);
 
-      if (success) {
+      if (error == null) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const MainScreen()),
           (route) => false,
         );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Account saved successfully!')),
+        );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Registration failed. Email might be taken.'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
+          SnackBar(content: Text(error), backgroundColor: Theme.of(context).colorScheme.error),
         );
+      }
+    } else {
+      // Б) НОВАЧОК: Створюємо новий акаунт
+      final success = await _authService.register(name, email, password);
+
+      if (mounted) {
+        setState(() => _isLoading = false);
+        if (success) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const MainScreen()),
+            (route) => false,
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Registration failed. Email might be taken.'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        }
       }
     }
   }
 
-  // Реєстрація через Google
-  Future<void> _handleGoogleSignIn() async {
+  // ЛОГІКА ДЛЯ КНОПКИ GOOGLE 
+  Future<void> _handleGoogleAction() async {
     setState(() => _isLoading = true);
     
-    final success = await _authService.continueWithGoogle();
-    
-    if (mounted) {
-      setState(() => _isLoading = false);
+    // Логіка залишається різною!
+    if (widget.isGuestConversion) {
+      // А) ГІСТЬ: Прив'язуємо Google
+      final error = await _authService.linkGoogle();
       
-      if (success) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (error == null) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const MainScreen()),
           (route) => false,
         );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Google account linked successfully!')),
+        );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Google Sign In failed')),
+          SnackBar(content: Text(error), backgroundColor: Theme.of(context).colorScheme.error),
         );
+      }
+    } else {
+      // Б) НОВАЧОК: Входимо через Google
+      final success = await _authService.continueWithGoogle();
+      
+      if (mounted) {
+        setState(() => _isLoading = false);
+        if (success) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const MainScreen()),
+            (route) => false,
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Google Sign In failed')),
+          );
+        }
       }
     }
   }
@@ -106,7 +157,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: Text(
-                      'Welcome aboard!',
+                      'Welcome aboard!', // Статичний текст
                       style: theme.textTheme.headlineLarge,
                       textAlign: TextAlign.center,
                     ),
@@ -115,13 +166,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: Text(
-                      'Let\'s start your new journey today',
+                      'Let\'s start your new journey today', // Статичний текст
                       style: theme.textTheme.bodyLarge,
                       textAlign: TextAlign.center,
                     ),
                   ),
                   const SizedBox(height: 44),
 
+                  // --- ПОЛЯ ВВОДУ ---
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Text('Enter your name', style: theme.textTheme.bodyLarge),
@@ -183,17 +235,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
           
                   const SizedBox(height: 32), 
                   
+                  // --- ГОЛОВНА КНОПКА (Sign Up) ---
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: _isLoading ? null : _handleSignUp, 
+                      onPressed: _isLoading ? null : _handleMainAction, 
                       child: _isLoading 
                         ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : const Text('Sign Up'),
+                        : const Text('Sign Up'), // Статичний текст
                     ),
                   ),
+                  
                   const SizedBox(height: 32),
                   
+                  // --- РОЗДІЛЮВАЧ ---
                   Row(
                     children: [
                       const Expanded(child: Divider(color: textTertiaryColor)),
@@ -206,10 +261,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                   const SizedBox(height: 32),
 
+                  // --- КНОПКА GOOGLE ---
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton(
-                      onPressed: _isLoading ? null : _handleGoogleSignIn, 
+                      onPressed: _isLoading ? null : _handleGoogleAction, 
                       style: OutlinedButton.styleFrom(
                         backgroundColor: theme.colorScheme.surface,
                         side: const BorderSide(color: textTertiaryColor),
@@ -219,7 +275,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         : Stack(
                         alignment: Alignment.center,
                         children: [
-                          const Text('Continue with Google'),
+                          const Text('Continue with Google'), // Статичний текст
                           Align(
                             alignment: Alignment.centerLeft,
                             child: SvgPicture.asset(
@@ -232,7 +288,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                     ),
                   ),
+                  
                   const SizedBox(height: 32),
+
+                  // --- ПОСИЛАННЯ НА ВХІД ---
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

@@ -5,6 +5,7 @@ import 'package:velotracker/theme/app_theme.dart';
 import 'package:velotracker/widgets/settings_widgets/setting_item.dart';
 import 'package:velotracker/widgets/settings_widgets/unit_option_button.dart';
 import 'package:velotracker/widgets/settings_widgets/logout_dialog.dart'; 
+import 'package:velotracker/screens/auth_screens/sign_up_screen.dart'; 
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -20,12 +21,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     _controller.loadSettings();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
   }
 
   void _showLogoutDialog() async {
@@ -53,6 +48,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return ListenableBuilder(
       listenable: _controller,
       builder: (context, child) {
+        
         if (_controller.isLoading) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
@@ -74,6 +70,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   Text('App Preferences', style: theme.textTheme.bodyLarge),
                   const SizedBox(height: 16),
+                  
+                  // --- БЛОК 1: НАЛАШТУВАННЯ ДОДАТКУ ---
                   Container(
                     padding: const EdgeInsets.all(32),
                     decoration: BoxDecoration(
@@ -132,28 +130,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             },
                           ),
                         ),
-                        
-                        const SizedBox(height: 32),
-                        const Divider(height: 1, color: outlineColor),
-                        const SizedBox(height: 32),
-
-                        // Dark Mode
-                        SettingItem(
-                          icon: Icons.dark_mode_outlined,
-                          title: 'Dark Mode',
-                          trailing: Switch(
-                            value: _controller.isDarkMode,
-                            activeThumbColor: primaryColor,
-                            inactiveThumbColor: textPrimaryColor,
-                            onChanged: _controller.toggleTheme,
-                          ),
-                        ),
                       ],
                     ),
                   ),
+                  
                   const SizedBox(height: 48),
                   Text('Account Actions', style: theme.textTheme.bodyLarge),
                   const SizedBox(height: 16),
+                  
+                  // --- БЛОК 2: АКАУНТ ---
                   Container(
                     padding: const EdgeInsets.all(32),
                     decoration: BoxDecoration(
@@ -162,23 +147,56 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     child: Column(
                       children: [
-                        SettingItem(
-                          icon: Icons.person_outline,
-                          title: 'Email',
-                          subtitle: _controller.userEmail,
-                          iconColor: textSecondaryColor,
-                          iconBgColor: outlineColor,
-                        ),
+                        if (_controller.isGuest) ...[
+                      
+                          SettingItem(
+                            icon: Icons.person_add_alt_1,
+                            title: 'Finish Registration',
+                            subtitle: 'Save your data permanently',
+                            iconColor: theme.colorScheme.primary,
+                            iconBgColor: primaryContainerColor,
+                            onTap: null, 
+                          ),
+                          
+                          const SizedBox(height: 12),
+
+                          // 2. Кнопка "Sign Up" 
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton( 
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => const SignUpScreen(isGuestConversion: true),
+                                  ),
+                                );
+                              }, 
+                              child: const Text('Sign Up'),
+                            ),
+                          ),
+                        ] else ...[
+                          // === ВАРІАНТ ДЛЯ ЗАРЕЄСТРОВАНОГО ===
+                          SettingItem(
+                            icon: Icons.person_outline,
+                            title: 'Email',
+                            subtitle: _controller.userEmail,
+                            iconColor: textSecondaryColor,
+                            iconBgColor: outlineColor,
+                          ),
+                        ],
+
                         const SizedBox(height: 32),
                         const Divider(height: 1, color: outlineColor),
                         const SizedBox(height: 32),
+                        
+                        // Кнопка Log Out
                         SettingItem(
                           icon: Icons.logout,
                           title: 'Log Out',
                           iconColor: errorColor,
                           iconBgColor: errorContainerColor,
                           isDestructive: true,
-                          onTap: _showLogoutDialog, // Тут нічого змінювати не треба
+                          onTap: _showLogoutDialog, 
                         ),
                       ],
                     ),

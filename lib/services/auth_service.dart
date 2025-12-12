@@ -15,9 +15,8 @@ class AuthService {
 
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
 
-  // -----------------------------
+  
   // 1. EMAIL + PASSWORD REGISTER
-  // -----------------------------
   Future<bool> register(String name, String email, String password) async {
     logger.i('Registering user: $email');
 
@@ -46,9 +45,8 @@ class AuthService {
     }
   }
 
-  // -----------------------------
+  
   // 2. Email + Password LOGIN
-  // -----------------------------
   Future<bool> login(String email, String password) async {
     logger.i('Login attempt: $email');
 
@@ -75,9 +73,8 @@ class AuthService {
     }
   }
 
-  // -----------------------------
+  
   // 3. GOOGLE AUTH
-  // -----------------------------
   Future<bool> continueWithGoogle() async {
     logger.i('Google Sign-In started');
 
@@ -137,9 +134,8 @@ class AuthService {
     }
   }
 
-  // -----------------------------
+  
   // LOGOUT
-  // -----------------------------
   Future<void> logout() async {
     logger.i('Logging out…');
 
@@ -149,18 +145,16 @@ class AuthService {
     logger.i('Logout complete. Token removed.');
   }
 
-  // -----------------------------
+  
   // GET TOKEN FROM SECURE STORAGE
-  // -----------------------------
   Future<String?> getToken() async {
     final token = await _storage.read(key: _tokenKey);
     logger.d('Token read: ${token != null ? "exists" : "null"}');
     return token;
   }
 
-  // -----------------------------
+  
   // PASSWORD RESET FLOW
-  // -----------------------------
   Future<bool> sendPasswordResetCode(String email) async {
     logger.i('Sending password reset code to $email');
 
@@ -216,10 +210,8 @@ class AuthService {
       return false;
     }
   }
-
-  // -----------------------------
+  
   // GET USER PROFILE
-  // -----------------------------
   Future<Map<String, dynamic>?> getUserProfile() async {
     logger.i('Fetching user profile…');
 
@@ -250,6 +242,109 @@ class AuthService {
     } catch (e, stack) {
       logger.e('Profile fetch exception', error: e, stackTrace: stack);
       return null;
+    }
+  }
+
+  Future<bool> loginAnonymously() async {
+    logger.i('Attempting anonymous login...');
+
+    try {
+      final response = await _dio.post('$_baseUrl/anonymous');
+
+      logger.d('Guest login status: ${response.statusCode}');
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final token = response.data['token'];
+        if (token != null) {
+          await _storage.write(key: _tokenKey, value: token);
+          logger.i('Guest login success. Token saved.');
+          return true;
+        }
+      }
+      return false;
+    } catch (e, stack) {
+      logger.e('Guest login exception', error: e, stackTrace: stack);
+      return false;
+    }
+  }
+
+  // CONVERT GUEST TO USER
+  Future<String?> convertGuest(String name, String email, String password) async {
+    final token = await getToken();
+    if (token == null) return "No guest session found";
+
+    try {
+      final response = await _dio.put(
+        '$_baseUrl/convert-guest',
+        data: {'name': name, 'email': email, 'password': password},
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      if (response.statusCode == 200) {
+        final newToken = response.data['token'];
+        await _storage.write(key: _tokenKey, value: newToken);
+        logger.i('Guest converted to User successfully');
+        return null; 
+      }
+      return 'Server error: ${response.statusCode}';
+    } on DioException catch (e) {
+      if (e.response != null && e.response!.data != null) {
+        return e.response!.data['message'] ?? 'Registration failed';
+      }
+      return 'Connection error';
+    }
+  }
+
+  // LINK GOOGLE до гостевого акаунту
+  Future<String?> linkGoogle() async {
+    final token = await getToken(); // Токен гостя
+    if (token == null) return "No guest session";
+
+    logger.i('Linking Google account started');
+
+    try {
+      await _googleSignIn.initialize(serverClientId: _webClientId);
+
+      final GoogleSignInAccount? googleUser = await _googleSignIn.authenticate();
+
+      if (googleUser == null) {
+        logger.w('Google linking cancelled by user');
+        return null; 
+      }
+
+      final googleAuth = await googleUser.authentication;
+      final idToken = googleAuth.idToken;
+
+      if (idToken == null) {
+        logger.e('Google ID Token is null');
+        return "Google auth failed";
+      }
+
+      final response = await _dio.put(
+        '$_baseUrl/link-google',
+        data: {'token': idToken},
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      if (response.statusCode == 200) {
+        final newToken = response.data['token'];
+        await _storage.write(key: _tokenKey, value: newToken);
+        logger.i('Guest linked to Google successfully');
+        return null; 
+      }
+      
+      return 'Server error: ${response.statusCode}';
+
+    } on DioException catch (e) {
+      logger.e('Link Google Dio exception', error: e);
+      if (e.response != null && e.response!.data != null) {
+
+        return e.response!.data['message'] ?? 'Linking failed';
+      }
+      return 'Connection error';
+    } catch (e, stack) {
+      logger.e('Link Google unknown exception', error: e, stackTrace: stack);
+      return 'Unknown error: $e';
     }
   }
 }
