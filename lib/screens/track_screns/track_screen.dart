@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:velotracker/models/ride_realtime_data.dart';
 import 'package:velotracker/screens/track_screns/ride_summary_screen.dart';
-import 'package:velotracker/services/settings_service.dart'; // 👇 Імпорт налаштувань
+import 'package:velotracker/services/settings_service.dart';
 import 'package:velotracker/services/tracking_service.dart';
 import 'package:velotracker/theme/app_theme.dart';
 import 'package:velotracker/widgets/tracks_widgets/discard_dialog.dart';
@@ -18,7 +18,7 @@ class TrackScreen extends StatefulWidget {
 
 class _TrackScreenState extends State<TrackScreen> {
   final TrackingService _trackingService = TrackingService();
-  
+
   TrackingState _currentState = TrackingState.ready;
   RideRealtimeData _currentData = RideRealtimeData.initial();
 
@@ -32,10 +32,10 @@ class _TrackScreenState extends State<TrackScreen> {
 
   Future<void> _onStart() async {
     bool started = await _trackingService.startTracking();
-    
+
     if (started) {
       setState(() => _currentState = TrackingState.tracking);
-      
+
       _trackingService.dataStream.listen((data) {
         if (mounted) {
           setState(() {
@@ -44,8 +44,8 @@ class _TrackScreenState extends State<TrackScreen> {
         }
       });
     } else {
-      if(mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('GPS permission needed to track ride')),
         );
       }
@@ -65,13 +65,13 @@ class _TrackScreenState extends State<TrackScreen> {
   Future<void> _onFinish() async {
     // 1. Ставимо на паузу, щоб не втратити дані
     _trackingService.pauseTracking();
-    
+
     setState(() => _currentState = TrackingState.paused);
 
     // 2. Забираємо СИРІ дані (в км та км/год) для збереження в базу
     final double distanceKm = _trackingService.currentDistanceKm;
     final Duration duration = _trackingService.currentDuration;
-    
+
     final double hours = duration.inSeconds / 3600;
     final double avgSpeed = hours > 0 ? distanceKm / hours : 0;
 
@@ -97,15 +97,15 @@ class _TrackScreenState extends State<TrackScreen> {
 
   void _onBackPressed() {
     if (_currentState == TrackingState.ready) {
-      Navigator.of(context).pop(); 
+      Navigator.of(context).pop();
     } else {
       showDialog(
         context: context,
         builder: (context) => DiscardDialog(
           onConfirm: () {
             _trackingService.stopTracking();
-            Navigator.of(context).pop(); 
-            Navigator.of(context).pop(); 
+            Navigator.of(context).pop();
+            Navigator.of(context).pop();
           },
         ),
       );
@@ -118,89 +118,84 @@ class _TrackScreenState extends State<TrackScreen> {
     final bool isPaused = _currentState == TrackingState.paused;
     final screenHeight = MediaQuery.of(context).size.height;
     final padding64 = screenHeight * 0.075;
-
-    // 👇 Обгортаємо в ListenableBuilder, щоб слухати зміну одиниць виміру
+    
     return ListenableBuilder(
-      listenable: SettingsController(),
-      builder: (context, child) {
-        final settings = SettingsController();
+        listenable: SettingsController(),
+        builder: (context, child) {
+          final settings = SettingsController();
 
-        // Конвертуємо поточні дані для відображення (Km -> Miles якщо треба)
-        final double displayDist = settings.convertDistance(_currentData.distanceKm);
-        final double displaySpeed = settings.convertSpeed(_currentData.currentSpeed);
+          final double displayDist = settings.convertDistance(_currentData.distanceKm);
+          final double displaySpeed = settings.convertSpeed(_currentData.currentSpeed);
 
-        return Scaffold(
-          backgroundColor: theme.colorScheme.surface,
-          appBar: AppBar(
-            backgroundColor: isPaused ? pauseColor : theme.colorScheme.surface,
-            elevation: 0,
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back),
-              color: textPrimaryColor,
-              onPressed: _onBackPressed,
+          return Scaffold(
+            backgroundColor: theme.colorScheme.surface,
+            appBar: AppBar(
+              backgroundColor: isPaused ? pauseColor : theme.colorScheme.surface,
+              elevation: 0,
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                color: textPrimaryColor,
+                onPressed: _onBackPressed,
+              ),
             ),
-          ),
-          body: Column(
-            children: [
-              // ВЕРХ: ЧАС (Колір змінюється при паузі)
-              Container(
-                width: double.infinity,
-                color: isPaused ? pauseColor : theme.colorScheme.surface,
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Column(
-                  children: [
-                    Text(
-                      _formatDuration(_currentData.duration),
-                      style: theme.textTheme.headlineLarge?.copyWith(fontSize: 48),
-                    ),
-                    Text('Duration', style: theme.textTheme.bodyLarge),
-                  ],
+            body: Column(
+              children: [
+                Container(
+                  width: double.infinity,
+                  color: isPaused ? pauseColor : theme.colorScheme.surface,
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Column(
+                    children: [
+                      Text(
+                        _formatDuration(_currentData.duration),
+                        style: theme.textTheme.headlineLarge?.copyWith(fontSize: 48),
+                      ),
+                      Text('Duration', style: theme.textTheme.bodyLarge),
+                    ],
+                  ),
                 ),
-              ),
-              
-              SizedBox(height: padding64),
-              
-              // ЦЕНТР: МЕТРИКИ
-              Expanded(
-                child: Column(
-                  children: [
-                    // Дистанція
-                    Text(
-                      displayDist.toStringAsFixed(2), // Конвертоване значення
-                      style: theme.textTheme.headlineLarge?.copyWith(fontSize: 152),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Distance (${settings.distanceUnit})', // 'km' або 'mi'
-                      style: theme.textTheme.bodyMedium
-                    ),
-                    
-                    SizedBox(height: padding64),
-                    
-                    // Швидкість
-                    Text(
-                      displaySpeed.toStringAsFixed(1), // Конвертоване значення
-                      style: theme.textTheme.headlineLarge?.copyWith(fontSize: 128),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Speed (${settings.speedUnit})', // 'km/h' або 'mph'
-                      style: theme.textTheme.bodyLarge
-                    ),
-                  ],
+
+                SizedBox(height: padding64),
+
+                Expanded(
+                  child: Column(
+                    children: [
+                      // Дистанція
+                      Text(
+                        displayDist.toStringAsFixed(2),
+                        style: theme.textTheme.headlineLarge?.copyWith(fontSize: 152),
+                      ),
+                      const SizedBox(height: 8),
+                      Text('Distance (${settings.distanceUnit})',
+                          style: theme.textTheme.bodyMedium),
+
+                      SizedBox(height: padding64),
+
+                      // --- 👇 ЗМІНИ ТУТ 👇 ---
+                      // Швидкість (Best Practice: Прямий Text для миттєвого відображення)
+                      // Ми прибрали TweenAnimationBuilder, щоб не було жодного лагу
+                      Text(
+                        displaySpeed.toStringAsFixed(1),
+                        style: theme.textTheme.headlineLarge?.copyWith(fontSize: 128),
+                      ),
+                      // -----------------------
+                      
+                      const SizedBox(height: 8),
+                      Text('Speed (${settings.speedUnit})',
+                          style: theme.textTheme.bodyLarge),
+                    ],
+                  ),
                 ),
-              ),
-              
-              // НИЗ: КНОПКИ
-              Padding(
-                padding: EdgeInsets.only(bottom: padding64, left: 16, right: 16),
-                child: _buildControlButtons(),
-              ),
-            ],
-          ),
-        );
-      }
-    );
+
+                // НИЗ: КНОПКИ
+                Padding(
+                  padding: EdgeInsets.only(bottom: padding64, left: 16, right: 16),
+                  child: _buildControlButtons(),
+                ),
+              ],
+            ),
+          );
+        });
   }
 
   Widget _buildControlButtons() {
@@ -210,14 +205,11 @@ class _TrackScreenState extends State<TrackScreen> {
           width: double.infinity,
           child: ElevatedButton(
             onPressed: _onStart,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                  SvgPicture.asset('assets/icons/start.svg'),
-                  const SizedBox(width: 4),
-                  const Text('Start')  
-              ]
-            ),
+            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              SvgPicture.asset('assets/icons/start.svg'),
+              const SizedBox(width: 4),
+              const Text('Start')
+            ]),
           ),
         );
 
@@ -226,14 +218,11 @@ class _TrackScreenState extends State<TrackScreen> {
           width: double.infinity,
           child: OutlinedButton(
             onPressed: _onPause,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                  SvgPicture.asset('assets/icons/pause.svg'),
-                  const SizedBox(width: 4),
-                  const Text('Pause')  
-              ]
-            ),
+            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              SvgPicture.asset('assets/icons/pause.svg'),
+              const SizedBox(width: 4),
+              const Text('Pause')
+            ]),
           ),
         );
 
@@ -244,13 +233,12 @@ class _TrackScreenState extends State<TrackScreen> {
               child: ElevatedButton(
                 onPressed: _onResume,
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
                       SvgPicture.asset('assets/icons/start.svg'),
                       const SizedBox(width: 4),
-                      const Text('Resume')  
-                  ]
-                ),
+                      const Text('Resume')
+                    ]),
               ),
             ),
             const SizedBox(width: 16),
@@ -259,13 +247,12 @@ class _TrackScreenState extends State<TrackScreen> {
                 onPressed: _onFinish,
                 style: OutlinedButton.styleFrom(backgroundColor: pauseColor),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
                       SvgPicture.asset('assets/icons/finish.svg'),
                       const SizedBox(width: 4),
-                      const Text('Finish')  
-                  ]
-                ),
+                      const Text('Finish')
+                    ]),
               ),
             ),
           ],

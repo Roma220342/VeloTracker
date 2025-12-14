@@ -147,7 +147,7 @@ class _RidesScreenState extends State<RidesScreen> {
                 title: const Text('Rides'),
                 centerTitle: true,
                 actions: [
-                  if (!isEmptyState) // Ховаємо пошук, якщо нема чого шукати
+                  if (!isEmptyState) 
                     Padding(
                       padding: const EdgeInsets.only(right: 16.0),
                       child: IconButton(
@@ -165,9 +165,9 @@ class _RidesScreenState extends State<RidesScreen> {
         // --- BODY ---
         body: SafeArea(
           child: _isLoading 
-              ? const Center(child: CircularProgressIndicator()) // Крутилка
+              ? const Center(child: CircularProgressIndicator()) 
               : isEmptyState
-                  ? _buildEmptyState(theme) // Пустий екран
+                  ? _buildEmptyState(theme) 
                   : RefreshIndicator( // Можливість потягнути вниз для оновлення
                       onRefresh: _refreshList,
                       child: _buildDataContent(theme),
@@ -178,15 +178,12 @@ class _RidesScreenState extends State<RidesScreen> {
   }
 
   Widget _buildDataContent(ThemeData theme) {
-    // Рахуємо загальну статистику для карток зверху (В КІЛОМЕТРАХ)
     double totalDistKm = 0;
     double maxSpeedKmh = 0;
     for (var r in _allRides) {
       totalDistKm += r.distance;
       if (r.maxSpeed > maxSpeedKmh) maxSpeedKmh = r.maxSpeed;
     }
-
-    // 👇 Слухаємо налаштування для конвертації
     return ListenableBuilder(
       listenable: SettingsController(),
       builder: (context, child) {
@@ -213,15 +210,14 @@ class _RidesScreenState extends State<RidesScreen> {
               
               const SizedBox(height: 16),
 
-              // Статистика (динамічна!)
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
                   children: [
                     StatsCard(
-                      label: 'Total Dist.', 
-                      value: displayTotal.toStringAsFixed(1), 
+                      label: 'Total Distance', 
+                      value: displayTotal.toStringAsFixed(2), 
                       unit: settings.distanceUnit
                     ),
                     StatsCard(
@@ -239,7 +235,6 @@ class _RidesScreenState extends State<RidesScreen> {
               const SizedBox(height: 24),
             ],
 
-            // Список
             Expanded(
               child: _filteredRides.isEmpty
                   ? Center(
@@ -262,7 +257,6 @@ class _RidesScreenState extends State<RidesScreen> {
                                 builder: (context) => RideDetailsScreen(ride: ride),
                               ),
                             );
-                            // Оновити список, якщо повернулись
                             _refreshList(); 
                           },
                         );
@@ -291,7 +285,7 @@ class _RidesScreenState extends State<RidesScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 SvgPicture.asset(
-                  'assets/icons/logo_welcome_screen.svg', // Твоя картинка
+                  'assets/icons/logo_welcome_screen.svg', 
                   width: 200,
                 ),
                 const SizedBox(height: 24),

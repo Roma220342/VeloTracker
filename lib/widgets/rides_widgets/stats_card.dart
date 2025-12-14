@@ -16,23 +16,21 @@ class StatsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
-    return Container(
-      
+    return Container(      
       margin: const EdgeInsets.only(right: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: onSurfaceColor,
         borderRadius: BorderRadius.circular(25),
       ),
+      
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
             style: theme.textTheme.bodyLarge,
-            maxLines: 1,
-           
+            maxLines: 1,           
           ),
 
           const SizedBox(height: 8),

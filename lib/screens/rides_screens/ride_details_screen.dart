@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:velotracker/models/ride_model.dart';
 import 'package:velotracker/services/ride_service.dart';
-import 'package:velotracker/services/settings_service.dart'; // 👇 Імпорт налаштувань
+import 'package:velotracker/services/settings_service.dart'; 
 import 'package:velotracker/theme/app_theme.dart';
 import 'package:velotracker/widgets/ride_details_widgets/delete_ride_dialog.dart';
 import 'package:velotracker/widgets/rides_widgets/detail_item.dart';
@@ -96,8 +96,6 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
     final screenHeight = MediaQuery.of(context).size.height;
     final mapHeight = screenHeight * 0.45;
     final dateStr = DateFormat('MMMM d, yyyy \'at\' HH:mm').format(_displayRide.date);
-
-    // 👇 Слухаємо зміни налаштувань (KM/Miles)
     return ListenableBuilder(
       listenable: SettingsController(),
       builder: (context, child) {
@@ -174,7 +172,6 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
                 Text(_displayRide.title, style: theme.textTheme.headlineMedium),
                 const SizedBox(height: 24),
 
-                // 👇 Використовуємо конвертовані значення та одиниці виміру
                 DetailItem(
                   icon: Icons.straighten, 
                   label: 'Distance', 

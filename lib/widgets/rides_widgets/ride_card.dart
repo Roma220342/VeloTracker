@@ -20,18 +20,15 @@ class RideCard extends StatelessWidget {
     final theme = Theme.of(context);
     final dateStr = DateFormat('MMMM d, yyyy \'at\' HH:mm').format(ride.date);
 
-    // 👇 Слухаємо налаштування (KM/Miles)
     return ListenableBuilder(
       listenable: SettingsController(),
       builder: (context, child) {
         final settings = SettingsController();
-        
-        // Конвертуємо дані
+
         final dist = settings.convertDistance(ride.distance).toStringAsFixed(2);
         final speed = settings.convertSpeed(ride.avgSpeed).toStringAsFixed(1);
-        final unitD = settings.distanceUnit; // 'km' або 'mi'
-        final unitS = settings.speedUnit;    // 'km/h' або 'mph'
-
+        final unitD = settings.distanceUnit; 
+        final unitS = settings.speedUnit;   
         return GestureDetector(
           onTap: onTap,
           child: Container(
@@ -70,8 +67,7 @@ class RideCard extends StatelessWidget {
                       ),
 
                       const SizedBox(height: 4),
-
-                      // 👇 Оновлений рядок з динамічними одиницями виміру
+                      
                       Text(
                         '$dist $unitD · $speed $unitS · ${ride.duration}',
                         style: theme.textTheme.bodyLarge,

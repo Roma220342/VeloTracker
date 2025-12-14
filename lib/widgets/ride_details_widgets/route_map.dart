@@ -91,7 +91,9 @@ class _RouteMapState extends State<RouteMap> {
       ),
       children: [
         TileLayer(
-          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          urlTemplate:
+            'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+          subdomains: ['a', 'b', 'c'],
           userAgentPackageName: 'com.example.velotracker',
         ),
         if (_points.length > 1)
@@ -100,8 +102,8 @@ class _RouteMapState extends State<RouteMap> {
               Polyline(
                 points: _points,
                 strokeWidth: 4.0,
-                color: Colors.blue,
-                borderColor: Colors.blue.withValues(alpha: 0.5), 
+                color: const Color(0xFF1870EB),
+                borderColor: const Color(0xFF1870EB).withValues(alpha: 0.5), 
                 borderStrokeWidth: 2.0,
               ),
             ],
@@ -113,7 +115,7 @@ class _RouteMapState extends State<RouteMap> {
               width: 40,
               height: 40,
               alignment: Alignment.topCenter,
-              child: const Icon(Icons.location_on, color: primaryColor, size: 40),
+              child: const Icon(Icons.location_on, color: Colors.red, size: 40),
             ),
             if (_points.length > 1)
               Marker(
@@ -121,7 +123,7 @@ class _RouteMapState extends State<RouteMap> {
                 width: 40,
                 height: 40,
                 alignment: Alignment.topCenter,
-                child: const Icon(Icons.flag_circle, color: Colors.red, size: 40),
+                child: const Icon(Icons.flag, color: primaryColor, size: 40),
               ),
           ],
         ),

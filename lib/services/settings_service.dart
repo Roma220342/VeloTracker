@@ -40,11 +40,10 @@ class SettingsController extends ChangeNotifier {
     
     try {
       final isKm = await _prefsService.getUnitSystem();
-      final isDark = await _prefsService.getDarkMode();
       final userProfile = await _authService.getUserProfile();
 
       isKmSelected = isKm;
-      isDarkMode = isDark;
+   
 
      if (userProfile != null && userProfile['email'] != null) {
         final String rawEmail = userProfile['email'];
