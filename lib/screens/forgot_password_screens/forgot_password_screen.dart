@@ -12,7 +12,7 @@ class ForgotPasswordScreen extends StatefulWidget {
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final TextEditingController _emailController = TextEditingController();
-  final AuthService _authService = AuthService(); // 1. Ініціалізуємо сервіс
+  final AuthService _authService = AuthService(); 
   bool _isLoading = false;
 
   @override
@@ -61,6 +61,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final theme = Theme.of(context);
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final isKeyboardOpen = bottomInset > 0;
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
@@ -118,7 +120,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       : const Text('Send My Code'),
                   ),
                 ),
-                SizedBox(height: screenHeight * 0.037),
+                SizedBox(height: isKeyboardOpen ? 0 : screenHeight * 0.037),
               ],
             ),
           ),

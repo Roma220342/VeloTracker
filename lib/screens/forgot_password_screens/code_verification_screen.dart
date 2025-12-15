@@ -101,6 +101,8 @@ class _CodeVerificationScreenState extends State<CodeVerificationScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final screenHeight = MediaQuery.of(context).size.height;
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final isKeyboardOpen = bottomInset > 0;
 
     final defaultPinTheme = PinTheme(
       width: 72,
@@ -189,7 +191,7 @@ class _CodeVerificationScreenState extends State<CodeVerificationScreen> {
                       : const Text('Verify and Ride'),
                   ),
                 ),
-                SizedBox(height: screenHeight * 0.037),
+                SizedBox(height: isKeyboardOpen ? 0 : screenHeight * 0.037),
               ],
             ),
           ),

@@ -19,6 +19,7 @@ class ResetPasswordScreen extends StatefulWidget {
 class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final AuthService _authService = AuthService();
   
+  
   final TextEditingController _passController = TextEditingController();
   final TextEditingController _confirmPassController = TextEditingController();
 
@@ -78,6 +79,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final theme = Theme.of(context);
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final isKeyboardOpen = bottomInset > 0;
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
@@ -161,7 +164,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   ),
                 ),
                 
-                SizedBox(height: screenHeight * 0.037),
+                SizedBox(height: isKeyboardOpen ? 0 : screenHeight * 0.037),
               ],
             ),
           ),
