@@ -4,7 +4,8 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:velotracker/utils/app_logger.dart';
 
 class AuthService {
-  static const String _baseUrl = 'https://aida-aglitter-speedfully.ngrok-free.dev/api/users';
+  // static const String _baseUrl = 'https://aida-aglitter-speedfully.ngrok-free.dev/api/users';
+  static const String _baseUrl = 'https://velotracker-api.onrender.com/api/users';
   static const String _tokenKey = 'jwt_token';
 
   static const String _webClientId =

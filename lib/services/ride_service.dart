@@ -5,7 +5,8 @@ import 'package:velotracker/services/auth_service.dart';
 import 'package:velotracker/utils/app_logger.dart';
 
 class RideService {
-  static const String _baseUrl = 'https://aida-aglitter-speedfully.ngrok-free.dev/api/rides';
+  // static const String _baseUrl = 'https://aida-aglitter-speedfully.ngrok-free.dev/api/rides';
+  static const String _baseUrl = 'https://velotracker-api.onrender.com/api/rides';
   final AuthService _authService = AuthService();
 
   // Створення поїздки
