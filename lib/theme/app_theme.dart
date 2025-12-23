@@ -11,7 +11,7 @@ const Color errorColor = Color(0xFFB3261E);
 const Color errorContainerColor = Color(0xFFF7EDED);
 
 const Color surfaceColor = Color(0xFFFFFFFF);
-const Color onSurfaceColor = Color(0xFFF7F7F7);
+const Color onSurfaceColor = Color(0xFFAFAFAF);
 const Color onSurfaceActiveColor = Color(0xFFF9F5FF);
 
 const Color textPrimaryColor = Color(0xFF121212);
