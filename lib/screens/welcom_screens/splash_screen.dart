@@ -37,7 +37,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _checkAuth() async {
     final List<dynamic> results = await Future.wait([
-      Future.delayed(const Duration(seconds: 2)),
+      Future.delayed(const Duration(milliseconds: 500)),
       _authService.getToken(),
     ]);
 
