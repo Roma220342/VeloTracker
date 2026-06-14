@@ -49,7 +49,7 @@
         <true/>
         <key>UIViewControllerBasedStatusBarAppearance</key>
         <false/>
-
+        
         <key>NSLocationWhenInUseUsageDescription</key>
         <string>Додаток використовує геолокацію для запису ваших веломаршрутів у реальному часі.</string>
         <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
@@ -61,11 +61,8 @@
             <string>location</string>
         </array>
 
-        <!-- Web Client ID — визначає audience токена, який перевіряє бекенд -->
         <key>GIDClientID</key>
-        <string>282808432308-sb0es97v49phernjl7uti1cee0rjqa2f.apps.googleusercontent.com</string>
-
-        <!-- iOS Client ID — потрібен для правильного redirect URI після авторизації -->
+        <string>282808432308-68e6o40gg4q462dcbok4adlm8bg639r1.apps.googleusercontent.com</string>
         <key>CFBundleURLTypes</key>
         <array>
             <dict>
