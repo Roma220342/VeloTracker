@@ -43,7 +43,7 @@ class SlidingSegmentedControl extends StatelessWidget {
                 width: segmentWidth,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primary, 
+                    color: theme.colorScheme.secondary, 
                     borderRadius: BorderRadius.circular(50),
                   ),
                 ),
@@ -77,7 +77,7 @@ class SlidingSegmentedControl extends StatelessWidget {
           child: AnimatedDefaultTextStyle(
             duration: const Duration(milliseconds: 200),
             style: theme.textTheme.bodyMedium!.copyWith(
-              color: isSelected ? Colors.white : textSecondaryColor,
+              color: isSelected ? textPrimaryColor : textSecondaryColor,
               fontWeight: isSelected ? FontWeight.w700 : FontWeight.normal,
             ),
             child: Text(text),

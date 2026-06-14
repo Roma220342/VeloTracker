@@ -41,14 +41,14 @@ class StatsCard extends StatelessWidget {
                 TextSpan(
                   text: value,
                   style: theme.textTheme.headlineMedium?.copyWith(
-                    color: primaryColor,
+                    color: primaryColor15,  
                   ),
                 ),
                 if (unit.isNotEmpty)
                   TextSpan(
                     text: ' $unit',
                     style: theme.textTheme.headlineMedium?.copyWith(
-                      color: primaryColor,
+                      color: primaryColor15,
                     ),
                   ),
               ],

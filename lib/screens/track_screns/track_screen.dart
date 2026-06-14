@@ -130,8 +130,7 @@ class _TrackScreenState extends State<TrackScreen> {
             appBar: AppBar(
               backgroundColor: isPaused ? pauseColor : theme.colorScheme.surface,
               elevation: 0,
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_back),
+              leading: BackButton(
                 color: textPrimaryColor,
                 onPressed: _onBackPressed,
               ),

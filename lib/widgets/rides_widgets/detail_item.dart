@@ -33,16 +33,15 @@ class DetailItem extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: const BoxDecoration(
-              color: primaryContainerColor, 
+              color: secondaryColor,
               shape: BoxShape.circle,
             ),
             child: Icon(
               icon,
-              color: primaryColor, 
               size: 24,
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 8),
           
           // Назва метрики
           Text(

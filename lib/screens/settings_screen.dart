@@ -106,7 +106,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     width: segmentWidth,
                                     child: Container(
                                       decoration: BoxDecoration(
-                                        color: theme.colorScheme.primary,
+                                        color: theme.colorScheme.secondary,
                                         borderRadius: BorderRadius.circular(50),
                                       ),
                                     ),
@@ -153,8 +153,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             icon: Icons.person_add_alt_1,
                             title: 'Finish Registration',
                             subtitle: 'Save your data permanently',
-                            iconColor: theme.colorScheme.primary,
-                            iconBgColor: primaryContainerColor,
+                            iconColor: textPrimaryColor,
+                            iconBgColor: secondaryColor,
                             onTap: null, 
                           ),
                           

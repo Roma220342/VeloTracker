@@ -109,8 +109,7 @@ class _RidesScreenState extends State<RidesScreen> {
         // --- APP BAR ---
         appBar: _isSearching
             ? AppBar( 
-                leading: IconButton(
-                  icon: const Icon(Icons.arrow_back),
+                leading: BackButton(
                   onPressed: () {
                     setState(() {
                       _isSearching = false; 

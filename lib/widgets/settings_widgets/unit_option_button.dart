@@ -24,7 +24,7 @@ class UnitOptionButton extends StatelessWidget {
             duration: const Duration(milliseconds: 200),
             style: TextStyle(
               fontSize: 16,
-              color: isActive ? Colors.white : textSecondaryColor,
+              color: isActive ? textPrimaryColor : textSecondaryColor,
               fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
             ),
             child: Text(title),

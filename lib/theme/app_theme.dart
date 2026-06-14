@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 const Color primaryColor = Color(0xFF207F56);
+const Color primaryColor15 = Color(0xFF0F3D29);
 const Color primaryContainerColor = Color(0xFFE0F3DC);
 const Color onPrimaryColor = Color(0xFFFFFFFF);
 const Color secondaryColor = Color(0xFFE3E8E6);
@@ -173,7 +174,7 @@ final ThemeData lightTheme = baseTheme.copyWith(
     backgroundColor: onSurfaceColor,
     elevation: 0,
 
-    selectedItemColor: primaryColor,
+    selectedItemColor: primaryColor15,
     unselectedItemColor: textSecondaryColor,
 
     selectedLabelStyle: baseTheme.textTheme.labelSmall,

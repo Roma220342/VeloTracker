@@ -14,8 +14,8 @@ class SettingItem extends StatelessWidget {
   const SettingItem({
     super.key,
     required this.icon,
-    this.iconColor = primaryColor,
-    this.iconBgColor = primaryContainerColor,
+    this.iconColor = textPrimaryColor,
+    this.iconBgColor = secondaryColor,
     required this.title,
     this.subtitle,
     this.trailing,
