@@ -1,18 +1,37 @@
 import 'package:flutter/material.dart';
-import 'package:velotracker/screens/welcom_screens/splash_screen.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart'; // 👇 Додано
+import 'package:velotracker/services/auth_service.dart';           // 👇 Додано
+import 'package:velotracker/screens/welcom_screens/welcome_screen.dart'; // 👇 Додано
 import 'screens/rides_screens/rides_screen.dart';
 import 'screens/track_screns/track_screen.dart';
 import 'screens/settings_screen.dart';
 import 'package:velotracker/services/settings_service.dart';
 import 'package:velotracker/theme/app_theme.dart';
 
-void main() {
+void main() async {
+  // 1. Обов'язкова ініціалізація для виконання асинхронного коду до runApp
+  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+
+  // 2. Утримуємо нативний сплеш-екран на дисплеї
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+
+  // Завантажуємо налаштування
   SettingsController().loadSettings();
-  runApp(const VeloTrackerApp());
+
+  // 3. Перевіряємо авторизацію ДО того, як малювати інтерфейс
+  final String? token = await AuthService().getToken();
+
+  // 4. Запускаємо додаток і передаємо йому знайдений токен
+  runApp(VeloTrackerApp(initialToken: token));
+
+  // 5. Тепер, коли Flutter готовий малювати потрібний екран, прибираємо сплеш-екран
+  FlutterNativeSplash.remove();
 }
 
 class VeloTrackerApp extends StatelessWidget {
-  const VeloTrackerApp({super.key});
+  final String? initialToken; // Отримуємо токен через конструктор
+
+  const VeloTrackerApp({super.key, this.initialToken});
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +46,8 @@ class VeloTrackerApp extends StatelessWidget {
           child: child!,
         );
       },
-      home: const SplashScreen(),
+      // Якщо токен є - йдемо на головний екран, якщо немає - на WelcomeScreen
+      home: initialToken != null ? const MainScreen() : const WelcomeScreen(),
     );
   }
 }
@@ -40,14 +60,12 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  // Починаємо з індексу 1 (Rides), щоб це був перший екран
   int _currentIndex = 1;
 
-  // Список екранів для IndexedStack
   final List<Widget> _screens = [
-    const SizedBox(), // Індекс 0: Заглушка (Track відкривається окремо)
-    const RidesScreen(), // Індекс 1: Rides
-    const SettingsScreen(), // Індекс 2: Settings
+    const SizedBox(), 
+    const RidesScreen(), 
+    const SettingsScreen(), 
   ];
 
   @override
@@ -57,7 +75,6 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
 
-      // IndexedStack зберігає стан екранів при перемиканні
       body: IndexedStack(
         index: _currentIndex,
         children: _screens,
@@ -65,18 +82,16 @@ class _MainScreenState extends State<MainScreen> {
 
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
-        type: BottomNavigationBarType.fixed, // Важливо для коректного відображення кольорів
+        type: BottomNavigationBarType.fixed, 
         
         onTap: (index) {
           if (index == 0) {
-            // Якщо натиснули "Track" - відкриваємо його як повноекранну сторінку (поверх меню)
             Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (context) => const TrackScreen(),
               ),
             );
           } else {
-            // Для інших вкладок (Rides, Settings) просто перемикаємо індекс
             setState(() => _currentIndex = index);
           }
         },
