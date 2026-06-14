@@ -60,5 +60,19 @@
         <array>
             <string>location</string>
         </array>
+
+        <key>GIDClientID</key>
+        <string>282808432308-68e6o40gg4q462dcbok4adlm8bg639r1.apps.googleusercontent.com</string>
+        <key>CFBundleURLTypes</key>
+        <array>
+            <dict>
+                <key>CFBundleTypeRole</key>
+                <string>Editor</string>
+                <key>CFBundleURLSchemes</key>
+                <array>
+                    <string>com.googleusercontent.apps.282808432308-68e6o40gg4q462dcbok4adlm8bg639r1</string>
+                </array>
+            </dict>
+        </array>
     </dict>
 </plist>
