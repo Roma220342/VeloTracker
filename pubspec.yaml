@@ -23,7 +23,7 @@ dependencies:
   logger: ^2.0.2
   shared_preferences: ^2.5.3
   
-  # 👇 Я ПЕРЕНІС ЦЕ СЮДИ! Це виправить помилку збірки.
+  # Плагін для завантажувального екрана (splash screen)
   flutter_native_splash: ^2.3.1
 
 dev_dependencies:
@@ -31,22 +31,23 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^5.0.0
   flutter_launcher_icons: ^0.14.4
-  # Звідси flutter_native_splash я видалив
 
 flutter:
   uses-material-design: true
   assets:
     - assets/icons/
 
+# Налаштування іконки додатка
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
   image_path: "assets/icons/app_logo.png"
   min_sdk_android: 21
-  adaptive_icon_background: "#009F5A"
+  adaptive_icon_background: "#207F56"
   adaptive_icon_foreground: "assets/icons/app_logo.png"
 
+# Налаштування завантажувального екрана
 flutter_native_splash:
-  color: "#009F5A"
-
+  color: "#207F56"
+  image: assets/icons/app_logo.png  # Тепер логотип буде відображатися на splash screen
   fullscreen: true
