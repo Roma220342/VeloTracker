@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
 
-const Color primaryColor = Color(0xFF009F5A);
+const Color primaryColor = Color(0xFF207F56);
 const Color primaryContainerColor = Color(0xFFE0F3DC);
 const Color onPrimaryColor = Color(0xFFFFFFFF);
-const Color secondaryColor = Color(0xFFFFF9C4);
-const Color pauseColor = Color(0xFFFFEB3B);
-const Color outlineColor = Color(0xFFB7E1DD);
+const Color secondaryColor = Color(0xFFE3E8E6);
+const Color pauseColor = Color(0xFFFFF9C2);
+const Color outlineColor = Color(0xFFADEBD0);
 
 const Color errorColor = Color(0xFFB3261E);
 const Color errorContainerColor = Color(0xFFF7EDED);
 
 const Color surfaceColor = Color(0xFFFFFFFF);
-const Color onSurfaceColor = Color(0xFFFAFAFA);
-const Color onSurfaceActiveColor = Color(0xFFF9F5FF);
+const Color onSurfaceColor = Color(0xFFF9FAFA);
+const Color onSurfaceActiveColor = Color(0xFFF9F7FD);
 
-const Color textPrimaryColor = Color(0xFF121212);
-const Color textSecondaryColor = Color(0xFF5E5E5E);
-const Color textTertiaryColor = Color(0xFF9E9E9E);
+const Color textPrimaryColor = Color(0xFF131615);
+const Color textSecondaryColor = Color(0xFF5E6E67);
+const Color textTertiaryColor = Color(0xFF91A19A);
 
 final ThemeData baseTheme = ThemeData(
   useMaterial3: true,

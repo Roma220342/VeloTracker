@@ -116,8 +116,6 @@ class _TrackScreenState extends State<TrackScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final bool isPaused = _currentState == TrackingState.paused;
-    final screenHeight = MediaQuery.of(context).size.height;
-    final padding64 = screenHeight * 0.075;
     
     return ListenableBuilder(
         listenable: SettingsController(),
@@ -138,61 +136,93 @@ class _TrackScreenState extends State<TrackScreen> {
                 onPressed: _onBackPressed,
               ),
             ),
-            body: Column(
-              children: [
-                Container(
-                  width: double.infinity,
-                  color: isPaused ? pauseColor : theme.colorScheme.surface,
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Column(
-                    children: [
-                      Text(
-                        _formatDuration(_currentData.duration),
-                        style: theme.textTheme.headlineLarge?.copyWith(fontSize: 48),
-                      ),
-                      Text('Duration', style: theme.textTheme.bodyLarge),
-                    ],
+            // SafeArea захищає від накладання на Dynamic Island зверху та Home Indicator знизу
+            body: SafeArea(
+              child: Column(
+                children: [
+                  // ТАЙМЕР
+                  Container(
+                    width: double.infinity,
+                    color: isPaused ? pauseColor : theme.colorScheme.surface,
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Column(
+                      children: [
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            _formatDuration(_currentData.duration),
+                            // height: 1.1 прибирає зайве пусте місце над/під шрифтом
+                            style: theme.textTheme.headlineLarge?.copyWith(fontSize: 48, height: 1.1),
+                          ),
+                        ),
+                        Text('Duration', style: theme.textTheme.bodyLarge),
+                      ],
+                    ),
                   ),
-                ),
 
-                SizedBox(height: padding64),
+                  // Гнучкий простір замість жорсткого padding64
+                  const Spacer(flex: 1),
 
-                Expanded(
-                  child: Column(
-                    children: [
-                      // Дистанція
-                      Text(
-                        displayDist.toStringAsFixed(2),
-                        style: theme.textTheme.headlineLarge?.copyWith(fontSize: 152),
+                  // ЦЕНТРАЛЬНА ЧАСТИНА: ДИСТАНЦІЯ ТА ШВИДКІСТЬ
+                  Expanded(
+                    flex: 8, // Віддаємо максимум вільного місця під блок з цифрами
+                    child: Padding(
+                      // Горизонтальні відступи обов'язкові, щоб FittedBox знав межі звуження
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // Дистанція
+                          Flexible(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                displayDist.toStringAsFixed(2),
+                                style: theme.textTheme.headlineLarge?.copyWith(
+                                  fontSize: 152,
+                                  height: 1.0, 
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text('Distance (${settings.distanceUnit})',
+                              style: theme.textTheme.bodyMedium),
+
+                          // Пружина між дистанцією та швидкістю
+                          const Spacer(flex: 2),
+
+                          // Швидкість
+                          Flexible(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                displaySpeed.toStringAsFixed(1),
+                                style: theme.textTheme.headlineLarge?.copyWith(
+                                  fontSize: 128,
+                                  height: 1.0,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text('Speed (${settings.speedUnit})',
+                              style: theme.textTheme.bodyLarge),
+                        ],
                       ),
-                      const SizedBox(height: 8),
-                      Text('Distance (${settings.distanceUnit})',
-                          style: theme.textTheme.bodyMedium),
-
-                      SizedBox(height: padding64),
-
-                      // --- 👇 ЗМІНИ ТУТ 👇 ---
-                      // Швидкість (Best Practice: Прямий Text для миттєвого відображення)
-                      // Ми прибрали TweenAnimationBuilder, щоб не було жодного лагу
-                      Text(
-                        displaySpeed.toStringAsFixed(1),
-                        style: theme.textTheme.headlineLarge?.copyWith(fontSize: 128),
-                      ),
-                      // -----------------------
-                      
-                      const SizedBox(height: 8),
-                      Text('Speed (${settings.speedUnit})',
-                          style: theme.textTheme.bodyLarge),
-                    ],
+                    ),
                   ),
-                ),
 
-                // НИЗ: КНОПКИ
-                Padding(
-                  padding: EdgeInsets.only(bottom: padding64, left: 16, right: 16),
-                  child: _buildControlButtons(),
-                ),
-              ],
+                  const Spacer(flex: 1),
+
+                  // НИЗ: КНОПКИ
+                  Padding(
+                    // Зменшили нижній відступ до 16, оскільки SafeArea вже додає відступ від краю
+                    padding: const EdgeInsets.only(bottom: 16, left: 16, right: 16),
+                    child: _buildControlButtons(),
+                  ),
+                ],
+              ),
             ),
           );
         });

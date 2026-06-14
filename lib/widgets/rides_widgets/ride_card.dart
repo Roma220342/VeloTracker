@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:velotracker/services/settings_service.dart'; // 👇 Імпорт налаштувань
 import 'package:velotracker/theme/app_theme.dart';
 import 'package:velotracker/models/ride_model.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 
 class RideCard extends StatelessWidget {
@@ -29,6 +28,7 @@ class RideCard extends StatelessWidget {
         final speed = settings.convertSpeed(ride.avgSpeed).toStringAsFixed(1);
         final unitD = settings.distanceUnit; 
         final unitS = settings.speedUnit;   
+        
         return GestureDetector(
           onTap: onTap,
           child: Container(
@@ -42,21 +42,9 @@ class RideCard extends StatelessWidget {
 
             child: Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  width: 40,
-                  height: 40, 
-                  decoration: const BoxDecoration(
-                    color: primaryContainerColor,
-                    shape: BoxShape.circle,
-                  ),
-                  child: SvgPicture.asset(
-                    'assets/icons/logo_rides_screen.svg',
-                  ),
-                ),
-
-                const SizedBox(width: 16),
-
+                // Видалено блок з іконкою та відступом. 
+                // Тепер текст починається одразу від краю картки.
+                
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
